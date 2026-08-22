@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delver's Cut — Character Creator</title>
+<style>
+  :root{
+    --ink:#2c2216;
+    --accent:#6e1b1b;
+    --accent-soft:#8c3a3a;
+    --brown:#3b2a1a;
+    --brown-mid:#7a6748;
+    --paper:#f6f1e4;
+    --paper-card:#fffdf7;
+    --line:#c9bb98;
+    --gold:#a9843f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Iowan Old Style','Georgia',serif; background:var(--paper); color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:640px;margin:0 auto;padding:16px 16px 90px;}
+  h1,h2,h3{font-family:'Georgia',serif; margin:0 0 6px;}
+  .brand{
+    text-align:center; padding:18px 0 10px;
+  }
+  .brand .eyebrow{letter-spacing:3px;font-size:11px;color:var(--brown-mid);font-weight:600;}
+  .brand h1{color:var(--accent);font-size:26px;letter-spacing:1px;border-bottom:3px double var(--accent);display:inline-block;padding-bottom:6px;margin-top:2px;}
+  .step-bar{display:flex;gap:4px;margin:10px 0 18px;}
+  .step-dot{flex:1;height:5px;border-radius:3px;background:var(--line);}
+  .step-dot.active{background:var(--accent);}
+  .step-dot.done{background:var(--gold);}
+  .card{
+    background:var(--paper-card); border:1px solid var(--line); border-radius:8px; padding:14px;
+    margin-bottom:12px; box-shadow:0 1px 2px rgba(59,42,26,0.06);
+  }
+  .card h2{color:var(--brown);font-size:14px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:10px;}
+  label{display:block;font-size:12px;font-weight:700;color:var(--brown-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  input[type=text], select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px; background:#fff;
+    font-family:inherit; font-size:15px; color:var(--ink); margin-bottom:10px;
+  }
+  .choice-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .choice-card{
+    border:2px solid var(--line); border-radius:8px; padding:10px; cursor:pointer; background:#fff;
+    transition:.15s;
+  }
+  .choice-card.selected{border-color:var(--accent); background:#fbeeee;}
+  .choice-card .name{font-weight:700; font-size:14px; color:var(--brown);}
+  .choice-card .blurb{font-size:11.5px; color:#6b5c42; margin-top:3px; line-height:1.3;}
+  .btn{
+    display:inline-block; background:var(--accent); color:#fff; border:none; border-radius:7px;
+    padding:12px 18px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer;
+    text-align:center; letter-spacing:.3px;
+  }
+  .btn.secondary{background:transparent; color:var(--accent); border:2px solid var(--accent); padding:10px 16px;}
+  .btn.small{padding:7px 12px; font-size:13px;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .nav-row{display:flex; justify-content:space-between; gap:10px; margin-top:16px;}
+  .nav-row .btn{flex:1;}
+  .attr-row{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .attr-row .attr-name{flex:0 0 100px; font-weight:700; font-size:13px; color:var(--brown);}
+  .attr-row select{margin-bottom:0; flex:1;}
+  .attr-row .final{flex:0 0 46px; text-align:center; font-weight:700; color:var(--accent); font-size:15px;}
+  .pool-note{font-size:12px; color:#8a7a5c; margin:6px 0 12px;}
+  .skill-slot{border:1px solid var(--line); border-radius:6px; padding:10px; margin-bottom:8px; background:#fffdf9;}
+  .skill-slot .slot-label{font-size:11px; color:var(--brown-mid); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px;}
+  .skill-slot .fixed-name{font-weight:700; color:var(--brown); font-size:14.5px;}
+  .dice-tag{display:inline-block; background:var(--gold); color:#fff; font-size:11px; font-weight:700; border-radius:10px; padding:2px 8px; margin-left:6px;}
+  .talent-list{display:flex; flex-wrap:wrap; gap:6px 10px; margin:6px 0 4px;}
+  .talent-chip{
+    display:flex; align-items:center; gap:5px; font-size:12.5px; border:1px solid var(--line); border-radius:5px;
+    padding:5px 8px; background:#fff; cursor:pointer;
+  }
+  .talent-chip.checked{background:#fbeeee; border-color:var(--accent); color:var(--accent);}
+  .talent-chip input{margin:0;}
+  .talent-chip.locked{opacity:.4; cursor:not-allowed;}
+  .cap-note{font-size:12px; color:var(--accent); font-weight:700; margin-bottom:6px;}
+  .subhead{font-weight:700; font-size:13px; color:var(--brown); margin:10px 0 4px;}
+  .gift-card{border:1px solid var(--line); border-radius:6px; padding:8px 10px; margin-bottom:6px; background:#fff; cursor:pointer;}
+  .gift-card.selected{border-color:var(--accent); background:#fbeeee;}
+  .gift-card .gname{font-weight:700; font-size:13.5px;}
+  .gift-card .geffect{font-size:11.5px; color:#6b5c42; margin-top:2px;}
+  .info-box{font-size:12.5px; background:#fbf6e8; border:1px dashed var(--gold); border-radius:6px; padding:8px 10px; margin-bottom:8px; line-height:1.4;}
+  .char-list-card{border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--paper-card); display:flex; justify-content:space-between; align-items:center;}
+  .char-list-card .cname{font-weight:700; color:var(--brown); font-size:15px;}
+  .char-list-card .csub{font-size:12px; color:#8a7a5c;}
+  .top-actions{display:flex; gap:8px; margin-bottom:14px;}
+  .top-actions .btn{flex:1;}
+  select:disabled{opacity:.5;}
+
+  /* ===== Sheet (print) styles ===== */
+  #sheet{display:none;}
+  .sheet-page{background:#fff; padding:0 4px 24px; border-bottom:2px dashed #ccc; margin-bottom:18px;}
+  .sheet-title{text-align:center; margin-bottom:10px;}
+  .sheet-title .se{font-size:10px; letter-spacing:3px; color:#8c8064; font-weight:700;}
+  .sheet-title h2{color:var(--accent); font-size:22px; border-bottom:3px double var(--accent); display:inline-block; padding-bottom:4px;}
+  .sheet-quote{font-style:italic; font-size:11.5px; color:#5a4a2e; text-align:center; margin:4px 0 10px;}
+  .sheet-sec{font-size:12px; text-transform:uppercase; letter-spacing:.8px; color:var(--accent); border-bottom:1px solid var(--brown); padding-bottom:3px; margin:12px 0 6px; font-weight:700;}
+  .sheet-table{width:100%; border-collapse:collapse; font-size:12px; margin-bottom:6px;}
+  .sheet-table th, .sheet-table td{border:1px solid #b8aa88; padding:4px 6px; text-align:left;}
+  .sheet-table th{background:#f2ecdd; font-size:10.5px; text-transform:uppercase;}
+  .sheet-p{font-size:12px; line-height:1.5; margin:3px 0;}
+  .sheet-checks span{margin-right:10px;}
+
+  /* ===== On-screen export view ===== */
+  body.export-mode{background:#e9e5dc;}
+  body.export-mode #app{max-width:900px;padding:18px 18px 60px;}
+  .export-toolbar{
+    position:sticky; top:0; z-index:20; display:flex; gap:8px; padding:10px;
+    margin:-18px -18px 16px; background:#f6f1e4; border-bottom:1px solid var(--line);
+  }
+  .export-toolbar .btn{flex:1;}
+  .export-document{
+    background:#fff; border:1px solid #c9bb98; box-shadow:0 3px 18px rgba(0,0,0,.12);
+    padding:28px; margin:0 auto; max-width:800px;
+  }
+  .export-document .sheet-page{display:block;background:#fff;border:0;margin:0;padding:0;}
+  .export-document .sheet-title{text-align:center;margin-bottom:10px;}
+  .export-document .sheet-title .se{font-size:10px;letter-spacing:3px;color:#8c8064;font-weight:700;}
+  .export-document .sheet-title h2{color:#6e1b1b;font-size:22px;border-bottom:3px double #6e1b1b;display:inline-block;padding-bottom:4px;}
+  .export-document .sheet-sec{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:#6e1b1b;border-bottom:1px solid #3b2a1a;padding-bottom:3px;margin:12px 0 6px;font-weight:700;}
+  .export-document .sheet-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;}
+  .export-document .sheet-table th,.export-document .sheet-table td{border:1px solid #b8aa88;padding:4px 6px;text-align:left;}
+  .export-document .sheet-table th{background:#f2ecdd;font-size:10.5px;text-transform:uppercase;}
+
+  .export-document .sheet-p{font-size:12px;line-height:1.5;margin:3px 0;}
+  .sheet-core-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;align-items:start;}
+  .sheet-statbox{border:1px solid #b8aa88;background:#faf7ef;padding:9px 10px;margin-bottom:7px;}
+  .sheet-statbox .big{font-size:16px;font-weight:700;color:#6e1b1b;}
+  .sheet-effect{font-size:11.5px;line-height:1.4;}
+  .sheet-action-table td:nth-child(1){font-weight:700;white-space:nowrap;}
+  @media (max-width:650px){.sheet-core-grid{grid-template-columns:1fr;}}
+
+
+  @media print{
+    body{background:#fff;}
+    body.export-mode #app{max-width:none;padding:0;}
+    body.export-mode .export-toolbar{display:none !important;}
+    body.export-mode .export-document{border:0;box-shadow:none;padding:0;max-width:none;}
+    body:not(.export-mode) #app > *{display:none !important;}
+    #sheet{display:block !important;}
+    body.export-mode #sheet{display:none !important;}
+    .sheet-page{border:none;page-break-after:always;padding-top:10px;}
+    .btn,.nav-row,.step-bar,.top-actions{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="sheet"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const DIE_LABEL = ['d4','d6','d8','d10','d12'];
+const DIE_FACE = [4,6,8,10,12];
+const ATTRS = ['Strength','Coordination','Speed','Fortitude','Brains','Presence','Discipline'];
+const PHYSICAL = ['Strength','Coordination','Speed','Fortitude'];
+
+const ORIGINS = {
+  Human: {
+    blurb: 'No supernatural gifts — wins through adaptability and refusal to quit.',
+    quote: '“You could walk into any saloon from the Barrens to the Coast and nobody would look twice. That’s not luck. That’s the whole trick.”',
+    array: [4,6,6,6,6,8,8],
+    mod: null,
+    features: [
+      ['Adaptable','1 bonus free token in Craftsmanship at creation (player\u2019s choice of trade).'],
+      ['Frontier Spirit','Baked into the starting array above (one Bottom slot upgraded to Mid).'],
+    ],
+    deathFate: 'On death, a Human rises again as Unliving.',
+  },
+  Unliving: {
+    blurb: 'Died once, came back changed — hard to hurt, slow to feel it.',
+    quote: '“They put two bullets in him outside the Silver Dollar. He got up, dusted off his coat, and asked who was buying the next round.”',
+    array: [4,4,6,6,6,8,8],
+    mod: {fixed:{Fortitude:1, Speed:-1}},
+    features: [
+      ['Death\u2019s Endurance','Recover 1 Health at the start of each turn. Immune to Bleeding. Expertise resisting fear/intimidation.'],
+      ['Numb to Pain','Expertise resisting pain-based effects.'],
+      ['Playing Possum','No breath, cold, pale — indistinguishable from a corpse while still/unconscious. Medicine DN 13 or Ghost/Spirit-detection to notice. Active feign: free, ends on acting/speaking/damage.'],
+    ],
+    deathFate: 'On death, an Unliving rises again as a Ghost.',
+  },
+  Shade: {
+    blurb: 'A bargain with a Patron — real power, a debt that never clears.',
+    quote: '“Everybody\u2019s got a price. Mine just came with horns.”',
+    array: [4,4,6,6,6,8,8],
+    mod: {fixed:{Presence:1, Discipline:-1}},
+    features: [
+      ['Supernatural Tell','Faint smoke smell; eyes darken when a Gift is used.'],
+      ['Dark Vision','Sees clearly in darkness at all times.'],
+    ],
+    hasDebtGifts: true,
+    deathFate: 'GM-discretion outcome (Full Intervention / Ghost Tether / Claimed — permanent).',
+  },
+  Automaton: {
+    blurb: 'A soul in a built body, running on Wear instead of wounds.',
+    quote: '“I don\u2019t remember my mother\u2019s name. I remember she smelled like lavender. That\u2019s got to count for something.”',
+    array: [4,4,6,6,6,8,8],
+    mod: {choicePhysical:{up:2, down:2}},
+    features: [
+      ['Immunities','Poisoned, Diseased, Drowning/Suffocating. Can\u2019t swim (walks submerged, half Move). No hunger/thirst.'],
+      ['Natural Armor','Flat DR 2, stacks with worn armor, never degrades.'],
+      ['Wear (Cap 4)','Wear 2: \u22121 step all Attributes. Wear 3: \u22122 steps + 10% malfunction. Wear 4: roll Malfunction Table.'],
+    ],
+    deathFate: 'On death (Core Breach), an Automaton rises again as a Ghost.',
+  },
+  Otherfolk: {
+    blurb: 'Passes for human; can step outside their own body.',
+    quote: '“Ask her where she\u2019s from and she\u2019ll smile like it\u2019s a good question. She\u2019s never once answered it.”',
+    array: [4,4,6,6,6,8,8],
+    mod: {fixed:{Presence:-2, Discipline:2}, choicePhysical:{up:1, down:1}},
+    features: [
+      ['Astral Projection','5\u201310 min prep, 1/day. Duration 1 min/level. True Spirit while projecting.'],
+      ['Telepathy','Simple message into another mind. Free use.'],
+      ['Detect Intention','Means harm / doesn\u2019t / unclear read. Free use.'],
+      ['Minor Telekinesis','Move a 5lb object, 1 hex, line of sight. Free use.'],
+    ],
+    deathFate: 'Death is fully final — no Ghost, no return path.',
+  },
+};
+
+const SHADE_GIFTS = [
+  ['Fortune Smiles', 1, 'Pay 1 Debt: Expertise on your next roll (incl. damage).'],
+  ['Darkness Aura', 1, 'Radius upgrades Cover 1 step inside it; you see clearly within it.'],
+  ['Mimic / Throw Voice', 1, 'Produce a known sound within 3 hexes + LOS.'],
+  ['Ashen Step', 1, 'Leave no tracks for 1 round +1/level.'],
+  ['Cheat Death', 3, 'When you would die, your Patron may intervene.'],
+  ['The Devil in Me', 3, '2 turns +1/level: claws/horns/fangs, physical Attributes +1 step.'],
+];
+
+const SKILL_CATALOG = {
+  weapon: { list:['Light Weapons','Heavy Weapons','Bows','Pistols','Rifles'] },
+  magic: { list:{
+    'Occult: Rituals': ['Anoint','Meditate','Funeral Rites'],
+    'Occult: Beguiling': ['Enchant Humanoid','Instill Fear','Calm Beast'],
+    'Occult: Wards': ['Mark of Truth','Glyph of Shadow','Prayer of Peace'],
+    'Arcanum: Flamecrafting': ['Ignite','Flameproof','Combust'],
+    'Arcanum: Summoning': ['Spirit Assistance','Summon Animal Helper','Summon Spirit Guardian'],
+    'Arcanum: Spirit Craft': ['Séance','Ghost Touch',"Revenant's Chill"],
+  }},
+  talent: {
+    'Brawling: Grappling': {attr:'Strength', tier1:['Clinch','Escape Hold','Trip']},
+    'Brawling: Pugilism': {attr:'Strength', tier1:['Pugilist','Slip the Punch','Hands Up']},
+    'Brawling: Bar Brawler': {attr:'Strength', tier1:['Dirty Fighting','Bottle Bash','Fall Guy']},
+    'Guile': {attr:'Presence', tier1:['Haggle','Deceive','Persuade']},
+    'Legerdemain': {attr:'Coordination', tier1:['Sleight of Hand','Conceal Object','Pick Locks']},
+    'Medicine': {attr:'Brains', tier1:['Barber','Druggist','Mortician']},
+    'Sneak': {attr:'Coordination', tier1:['Fleet of Foot','Stalk','Ambush']},
+    'Nature': {attr:'Brains', tier1:['Trapper','Wilderness Tracking','Nature Survival']},
+    'Horsemanship': {attr:'Coordination', flatPool:['Taming & Bonding','Driver','Cavalry','Trick Rider','Roper','Racing','Mounted Marksman','Horse Trading']},
+  },
+  flat: { list:{'Engineering':'Brains','Smithing':'Strength','Craftsmanship':'Strength','Alchemy':'Brains'} },
+};
+
+function allChoosableSkillNames(){
+  return [
+    ...SKILL_CATALOG.weapon.list,
+    ...Object.keys(SKILL_CATALOG.magic.list),
+    ...Object.keys(SKILL_CATALOG.talent),
+    ...Object.keys(SKILL_CATALOG.flat.list),
+  ];
+}
+function magicSkillNames(){ return Object.keys(SKILL_CATALOG.magic.list); }
+function weaponAttr(name){ return name==='Heavy Weapons' ? 'Strength' : 'Coordination'; }
+function skillAttr(name){
+  if (SKILL_CATALOG.weapon.list.includes(name)) return weaponAttr(name);
+  if (SKILL_CATALOG.magic.list[name]) return 'Brains';
+  if (SKILL_CATALOG.talent[name]) return SKILL_CATALOG.talent[name].attr;
+  if (SKILL_CATALOG.flat.list[name]) return SKILL_CATALOG.flat.list[name];
+  return '?';
+}
+function skillStartingTalents(name){
+  if (SKILL_CATALOG.magic.list[name]) return SKILL_CATALOG.magic.list[name];
+  const t = SKILL_CATALOG.talent[name];
+  if (!t) return null;
+  return t.flatPool || t.tier1 || null;
+}
+function isTalentBearing(name){ return !!skillStartingTalents(name); }
+function allowedWeaponChoices(calling){
+  let out = ['Light Weapons','Bows','Rifles'];
+  if (calling==='Maverick') out.push('Pistols');
+  if (calling==='Engineer') out.push('Heavy Weapons');
+  return out;
+}
+
+const CRAFT_SPECIALTIES = [
+  'Bowyer','Cabinetmaker','Carpenter','Carver','Cobbler','Cooper','Engraver','Fletcher',
+  'Furniture Maker','Glassblower','Harness Maker','Jeweler','Leatherworker','Mason','Potter',
+  'Saddler','Shipwright','Tailor','Weaver'
+];
+const SMITHING_SPECIALTIES = ['Gunsmith','Blacksmith (general)','Weaponsmith'];
+
+
+const ENGINEER_TIER1_INVENTIONS = ['Voltaic Charger','Aether Trap','Signal Flare','Patch Kit','Smoke Canister'];
+
+/* Export reference data. Effects below are only stated where the current Master text
+   actually supplies mechanics; undefined entries are deliberately identified as such. */
+const INVENTION_EFFECTS = {
+  'Voltaic Charger':'Reusable thrown/triggered device. Small radius; 2d6 damage. Target resists with Fortitude vs. DN 10 or gains Stunned (1 token; 2 vs. Spirits, Automatons, and Fiends). Uses 1 dose Oblivium Dust per activation.',
+  'Aether Trap':'Deploy as an Action. Triggers when a Spirit or Horror enters the hex; target resists with Discipline vs. DN 10 or is Restrained for 2 rounds. Single-use.',
+  'Signal Flare':'Burns for 10 minutes and is visible for miles at night; functions as a large-radius light source or long-distance signal. Single-use.',
+  'Patch Kit':'Halves the time needed for a field repair, including clearing Automaton Wear, vehicle repair, and similar quick fixes. 3 charges.',
+  'Smoke Canister':'Throw as a Maneuver; fills a 2-hex radius with heavy smoke for 3 rounds, granting Heavy Cover to anyone inside. Single-use.'
+};
+
+const TALENT_EFFECTS = {
+  'Pugilist':'Must be unarmed. Bonus 1d4 to unarmed attack rolls.',
+  'Slip the Punch':'Passive. Reduce damage from all unarmed strikes against you by 1.',
+  'Hands Up':'Must be unarmed. Bonus 1d4 to Melee Defense rolls against melee or unarmed attacks.',
+  'Dirty Fighting':'Call before rolling. Make an unarmed attack at −2; on success, deal no damage and apply Stunned, Blinded, or Deafened for 1 round.',
+  'Bottle Bash':'Use an improvised weapon with Bar Brawler + Strength. Deals 1d4–1d8 damage (GM sets die by object) and may inflict Bleeding or Concussed at GM discretion.',
+  'Fall Guy':'Shift your result one band better on the Fall & Unhorsed Table. Standing from Prone costs no Maneuver.',
+  'Haggle':'5% discount on purchases/services under 5 gold.',
+  'Deceive':'Bonus 1d4 to Guile checks made specifically to deceive.',
+  'Persuade':'Bonus 1d4 to Guile checks made specifically to persuade.',
+  'Ambush':'If undetected when combat begins and the target is unaware of you, act first without an Initiative roll. First attack gains Expertise and +1d4 damage.',
+  'Trapper':'Set a trap using Nature: Small DN 10/1 turn; Large DN 13/1 scene; Monster DN 17/full Layover. Choose immobilize, harm, or both when built, subject to GM discretion.',
+  'Wilderness Tracking':'Make a Nature check against a GM-set DN to find or pick up a subject’s trail.',
+  'Nature Survival':'Nature DN 10 to secure adequate shelter, food, water, and a workable weather read for yourself and the party for the day.',
+  'Taming & Bonding':'Break/tame wild or hostile horses and calm a spooked animal. A successfully bonded mount gains +1 die step to Discipline while you ride it.',
+  'Driver':'Control teams of 2+ harnessed horses without penalty; execute tight turns, regain control of runaways, and recover from wrecks/overturns.',
+  'Cavalry':'No mounted-attack penalty. Expertise on Horsemanship checks for Charge/Overrun, Charge attack rolls, and Overrun opposed rolls.',
+  'Trick Rider':'Vault mount/dismount mid-movement, perform mounted jumps/stunts, and ignore Getting Underway. Gain Expertise on these maneuver rolls.',
+  'Roper':'No lasso penalty from horseback. Expertise on roping/lasso rolls: Snare, Drag, Hogtie, and Catch.',
+  'Racing':'Spend 10 Aura for an additional mount Move this turn; spend 20 Aura for the additional Move with no risk of strain.',
+  'Mounted Marksman':'No penalty when firing a ranged weapon while mounted; cancels Rifle and other mounted weapon penalties.',
+  'Horse Trading':'When buying/selling horses or mules, roll Horsemanship dice + Presence export vs. DN 7; success changes price by your margin as a percentage.'
+};
+
+const WEAPON_STATS = {
+  'Knife':{skill:'Light Weapons',kind:'melee',damage:'1d4',note:'Bleed: margin 3+ inflicts Bleeding 1.'},
+  'Bowie Knife':{skill:'Light Weapons',kind:'melee',damage:'1d4+1',note:'Bleed: margin 3+ inflicts Bleeding 1.'},
+  'Machete':{skill:'Light Weapons',kind:'melee',damage:'1d4+2',note:'Bleed: margin 3+ inflicts Bleeding 1.'},
+  'Hatchet':{skill:'Light Weapons',kind:'melee',damage:'1d6+1',note:'Bleed; Demolisher.'},
+  'Saber':{skill:'Light Weapons',kind:'melee',damage:'1d6',note:'Bleed: margin 3+ inflicts Bleeding 1.'},
+  'Club / Improvised':{skill:'Heavy Weapons',kind:'melee',damage:'1d4',note:'Head Cracker: margin 6+ inflicts Concussed.'},
+  'Axe':{skill:'Heavy Weapons',kind:'melee',damage:'1d8',note:'Bleed; Demolisher; Two-Handed.'},
+  'Pickaxe / Mining Pick':{skill:'Heavy Weapons',kind:'melee',damage:'1d8',note:'Demolisher; Two-Handed.'},
+  'Crowbar / Pry Bar':{skill:'Heavy Weapons',kind:'melee',damage:'1d6',note:'Head Cracker; Demolisher; Crusher; Two-Handed.'},
+  'Heavy Shovel':{skill:'Heavy Weapons',kind:'melee',damage:'1d6',note:'Head Cracker; Two-Handed.'},
+  'Heavy Wrench':{skill:'Heavy Weapons',kind:'melee',damage:'1d6+1',note:'Head Cracker; Demolisher; Crusher; Two-Handed.'},
+  'Mattock':{skill:'Heavy Weapons',kind:'melee',damage:'1d10',note:'Demolisher; Crusher; Two-Handed.'},
+  'Sledgehammer':{skill:'Heavy Weapons',kind:'melee',damage:'1d12',note:'Head Cracker; Demolisher; Crusher; Two-Handed.'},
+
+  'Bow':{skill:'Bows',kind:'ranged',damage:'2d6',note:'Drawing/nocking is part of the Attack Action.'},
+  'Crossbow':{skill:'Bows',kind:'ranged',damage:'2d6',note:'Full Reload Action after each shot; worse range falloff than Bow.'},
+
+  'Lasso':{skill:'Light Weapons',kind:'special',damage:'No flat damage',note:'On foot: Light Weapons. Mounted: Horsemanship. Resolves through Snare/Drag/Hogtie/Catch.'},
+  'Whip':{skill:'Light Weapons',kind:'whip',damage:'1d4',note:'No Strength bonus. Also usable for Disarm and Spook.'},
+
+  'Snake Eyes (Derringer)':{skill:'Pistols',kind:'ranged',damage:'1d6+2',note:'Point Blank only; 1–2 shots; full Reload Action; Bleed.'},
+  'Model C (Pistol)':{skill:'Pistols',kind:'ranged',damage:'2d6+2',note:'Standard reload; Bleed.'},
+  'Model 13 (Pistol)':{skill:'Pistols',kind:'ranged',damage:'2d6+2',note:'Mechanically identical to Model C; Bleed.'},
+  'Mark I "Top-Break" (Pistol)':{skill:'Pistols',kind:'ranged',damage:'2d6+2',note:'Premium tier; Quick Reload Talent available; Bleed.'},
+  'Old Believer (Pistol)':{skill:'Pistols',kind:'ranged',damage:'2d6+2',note:'Cap-and-ball; two Reload Actions to fully reload; Bleed.'},
+
+  'Fallblock (Carbine)':{skill:'Rifles',kind:'ranged',damage:'3d6',note:'Single-shot; no Mounted/Close penalty; Bleed.'},
+  'Toggle-Link (Carbine)':{skill:'Rifles',kind:'ranged',damage:'3d6',note:'7-round lever-action; no Mounted/Close penalty; Bleed.'},
+  'Underlever (Carbine)':{skill:'Rifles',kind:'ranged',damage:'3d6',note:'Single-shot; no Mounted/Close penalty; Bleed.'},
+  'Fallblock Rifle':{skill:'Rifles',kind:'ranged',damage:'3d6+2',note:'Single-shot; Mounted/Close penalties; Bleed.'},
+  'Toggle-Link Rifle':{skill:'Rifles',kind:'ranged',damage:'3d6+2',note:'15-round lever-action; Mounted/Close penalties; Bleed.'},
+  'Underlever Rifle':{skill:'Rifles',kind:'ranged',damage:'3d6+2',note:'Single-shot; Mounted/Close penalties; Bleed.'},
+  'Coachbreak (Shotgun)':{skill:'Rifles',kind:'ranged',damage:'4d6',note:'Close/Point-Blank only; 2-shot break-action; Bleed.'}
+};
+
+
+// Equipment catalog — costs in sp (1 sp = 10 cp). Source: Economy & Equipment Master.
+const EQUIPMENT_CATALOG = {
+  'Livestock & Mounts': [
+    ['Donkey', 8], ['Mule', 15], ['Pack Horse', 35],
+    ['Riding Horse (standard)', 45], ['Riding Horse (fine)', 90],
+    ['Draft Horse', 60], ['Warhorse / Trained Combat Mount', 150],
+    ['Ox', 25], ['Cow / Head of Cattle', 12], ['Pig', 4], ['Goat', 2], ['Chicken', 0.2],
+  ],
+  'Mount Gear': [
+    ['Saddle & Tack', 2], ['Saddlebags', 1],
+  ],
+  'Travel, Food & Services': [
+    ['Rations (per day)', 0.5], ['Room — boarding house (per night)', 0.5],
+    ['Room — hotel (per night)', 2], ['Meal — saloon', 0.3], ['Train Ticket (per 100 mi)', 2],
+  ],
+  'Melee Weapons': [
+    ['Knife', 1], ['Hatchet', 2], ['Saber', 8], ['Club / Improvised', 0],
+    ['Axe', 5], ['Sledgehammer', 6],
+  ],
+  'Bows': [
+    ['Bow', 6], ['Crossbow', 10],
+  ],
+  'Mounted & Frontier': [
+    ['Lasso', 3], ['Whip', 4],
+  ],
+  'Firearms — Pistols/Derringers': [
+    ['Snake Eyes (Derringer)', 8], ['Model C (Pistol)', 15], ['Model 13 (Pistol)', 15],
+    ['Mark I "Top-Break" (Pistol)', 30], ['Old Believer (Pistol)', 10],
+  ],
+  'Firearms — Carbines': [
+    ['Fallblock (Carbine)', 20], ['Toggle-Link (Carbine)', 28], ['Underlever (Carbine)', 20],
+  ],
+  'Firearms — Rifles': [
+    ['Fallblock Rifle', 25], ['Toggle-Link Rifle', 35], ['Underlever Rifle', 25],
+  ],
+  'Firearms — Shotguns': [
+    ['Coachbreak (Shotgun)', 22],
+  ],
+  'Ammunition & Explosives': [
+    ['Arrows (10)', 0.5], ['Bolts (10)', 0.5], ['Derringer Rounds (2)', 0.3],
+    ['Pistol Ammo (6 rounds)', 0.3], ['Carbine Ammo (7 rounds)', 0.4], ['Rifle Ammo (15 rounds)', 0.6],
+    ['Shotgun Shells (2)', 0.4], ['Cap & Ball Loads (6)', 0.2], ['Percussion Caps (50)', 0.2],
+    ['Gunpowder (1 lb)', 1], ['Lead Shot / Balls (1 lb)', 0.3], ['Dynamite (1 stick)', 3],
+  ],
+  'Armor': [
+    ['Buffalo Hide Coat (DR1)', 20], ['Boiled / Hardened Leather Cuirass (DR2)', 15],
+    ['Ironclad Steel Vest (DR4)', 60],
+  ],
+  'Professional Tool Kits': [
+    ["Barber's Tools", 3], ["Dentist's Tools", 8], ["Surgeon's Tools", 20], ["Physician's Bag", 10],
+    ["Engineer's Toolkit", 15], ['Demolitions Kit', 18], ["Blacksmith's Tools", 15], ["Gunsmith's Tools", 18],
+    ["Silversmith's Tools", 15], ["Alchemist's Kit", 20], ["Thieves' Tools", 6], ["Forger's Kit", 8],
+    ["Occultist's Kit", 15], ['Forge (fixed)', 40], ['Portable Forge', 25],
+  ],
+  'General Adventuring Gear': [
+    ['Backpack', 1], ['Satchel', 0.5], ['Saddlebags', 1], ['Canvas Sack', 0.1], ['Small Wooden Crate', 0.2],
+    ['Bedroll', 0.5], ['Blanket', 0.3], ['Small Canvas Tent', 3], ['Canteen', 0.3], ['Tin Cup', 0.1],
+    ['Mess Kit', 0.3], ['Rope (50 ft)', 2], ['Chain (10 ft)', 2], ['Lantern', 5], ['Lantern Oil (1 pint)', 0.2],
+    ['Candles (6)', 0.1], ['Matches (box)', 0.1], ['Tinderbox', 0.2], ['Torch', 0.1], ['Field Glasses', 10],
+    ['Compass', 4], ['Local Map', 0.5], ['Fishing Kit', 0.5], ['Small Animal Trap', 1], ['Hammer', 0.3],
+    ['Nails / Spikes (20)', 0.2], ['Padlock & Key', 0.5], ['Manacles', 2], ['Gun Belt & Holster', 0.5],
+    ['Ammunition Belt / Pouch', 0.3], ['Powder Horn / Flask', 0.5], ['Whetstone', 0.1], ['Sewing Kit', 0.2],
+    ['Soap', 0.1], ['Straight Razor', 0.2], ['Small Mirror', 0.3], ['Comb', 0.1], ['Writing Kit', 0.5],
+    ['Field Journal', 0.3], ['Book', 0.5], ['Newspaper', 0.1], ['Deck of Cards', 0.2], ['Dice, Pair', 0.1],
+    ['Harmonica', 0.5], ['Tobacco & Papers', 0.2], ['Coffee (1 lb)', 0.4], ['Cooking Pot', 0.5],
+    ['Frying Pan', 0.5], ['Flask', 0.2], ['Empty Bottle', 0.1], ['Silver Mirror, Small', 1],
+    ['Holy Symbol', 0.3], ['Chalk (6 sticks)', 0.1], ['Small Bell', 0.2], ['Salt (1 lb)', 0.1],
+    ['Specimen Jars (3)', 0.3], ["Miner's Lamp / Helmet Lamp", 3], ['Prospecting Pan', 0.3],
+    ["Surveyor's Kit", 8], ['Telegraph Repair Supplies', 2], ['Small Lockbox', 2],
+  ],
+  'Trade Goods & Raw Materials': [
+    ['Rope, bulk (100 ft)', 3], ['Leather Hide', 1], ['Cloth, common (10 yd)', 1],
+    ['Nails, keg (approx. 5 lb)', 1], ['Iron Bar / Ingot', 2], ['Steel Bar / Ingot', 4],
+    ['Silver Ingot / Bar', 6], ['Coal, sack', 0.2], ['Timber / Lumber bundle', 0.5],
+    ['Glass, small sheet', 0.5], ['Gunpowder (1 lb)', 1], ['Lead Shot / Balls (1 lb)', 0.3],
+    ['Dyes, common packet', 0.2], ['Ink, bottle', 0.2], ['Paper, 20 sheets', 0.2],
+    ['Deck of Cards', 0.2], ['Dice, Pair', 0.1], ['Coffee (1 lb)', 0.4], ['Tobacco (1 lb)', 0.8],
+    ['Salt (5 lb)', 0.3], ['Soap, dozen bars', 0.8],
+  ],
+};
+
+const CALLINGS = {
+  Gunslinger: {
+    blurb:'Professional gunfighter — nerve under pressure, and a reputation that precedes them.',
+    fixed:[['Pistols',2],['Rifles',2]], anchorChoices:[], flexTokens:2,
+    abilities:[['Quick Draw','+2 to Initiative, round 1 only, while wielding Pistols or Rifles.'],['Steady Hand','Reduce any negative Range Band modifier’s magnitude by 1.'],['Reputation','Expertise (+2) on Intimidation-adjacent checks.']],
+  },
+  Maverick: {
+    blurb:'Improviser and social operator — audacity, bluffing, and a reputation for getting lucky.',
+    fixed:[['Guile',2]], anchorChoices:[{label:'Specialty Skill — 2 tokens', pool:'all', tokens:2}], flexTokens:2,
+    abilities:[['Innate Luck','Bonus die trigger costs 3 Aura instead of 6.'],['Fake It','+1 on untrained Skill checks.'],['Devil You Know','+1 resisting Charm, Persuasion, Intimidation, and similar effects.']],
+  },
+  Occultist: {
+    blurb:'Interacts with the unseen — faith and protection against the supernatural.',
+    fixed:[], anchorChoices:[{label:'Magic Skill #1 — 2 tokens',pool:'magic',tokens:2},{label:'Magic Skill #2 — 2 tokens',pool:'magic',tokens:2}], flexTokens:2,
+    abilities:[['Prayer','Gain Prayed: recover Aura and block the next negative Condition.'],['Attuned Senses','Sense a Ghost/Spirit nearby; once per day, Discipline DN 10 to see/hear it clearly.'],['Spirit Ward','−2 damage from Spirits; bonus 1d4 resisting Spirit effects.']],
+  },
+  Trailblazer: {
+    blurb:'Wilderness specialist — scouting, survival, and an instinct for the land.',
+    fixed:[['Nature',2],['Rifles',0]], anchorChoices:[], flexTokens:4,
+    abilities:[['Expert Hunter','Bonus 1d4 on attacks with Rifles, Bows, thrown weapons, bowie knife, hatchet, or spear.'],['Beast Bond','Tabled until the Bestiary is fully locked.'],['Blaze the Trail','Expertise on climbing checks; no movement penalty in difficult terrain.']],
+  },
+  Doc: {
+    blurb:'Frontier medicine and snake-oil — healing under pressure.',
+    fixed:[], anchorChoices:[{label:'Medical Skill — 2 tokens',pool:['Alchemy','Medicine'],tokens:2},{label:'Secondary Skill — 2 tokens',pool:'docSecondary',tokens:2}], flexTokens:2,
+    abilities:[['Triage','Action + 1 Reagent: stabilize and set target to 1 Health.'],['Quick Fix','1 Reagent: craft a Healing Tonic or Aura Tonic on the spot.'],['Call the Doctor','Passive discount on qualifying non-weapon goods.']],
+  },
+  Engineer: {
+    blurb:'Technical and scientific specialist — invention, Oblivium-tech, and steam devices.',
+    fixed:[['Engineering',2],['Craftsmanship',2]], anchorChoices:[{label:'Technical Specialty — 2 tokens',pool:'engineerSecondary',tokens:2}], flexTokens:2,
+    abilities:[['Technical Expert','Bonus 1d4 on qualifying mechanical/technical checks.'],['Apprenticeship','Craftsmanship at 2 tokens in one Specialty, in addition to the base package.']], inventions:true,
+  },
+};
+
+/* ============================= STATE ============================= */
+let pendingDeleteId = null;
+let state = {
+  screen: 'list', // list | wizard
+  step: 1,
+  id: null,
+  character: freshCharacter(),
+};
+
+function freshCharacter(){
+  return {
+    name: '', origin: null, calling: null,
+    attrAssign: {}, // attr -> array index used
+    attrFinal: {},  // attr -> die index (0-4)
+    autoPhysUp: null, autoPhysDown: null, // Automaton/Otherfolk choice
+    anchorChoices: {}, // anchor index -> skillName
+    weaponChoice: null,
+    flexSkillChoices: [null,null,null,null],
+    flexAlloc: {}, // skillName -> flexible tokens spent
+    skillDice: {}, // skillName -> [dieIdx, dieIdx]
+    talents: [], // list of chosen Talent names
+    shadeGifts: [],
+    engineerInvention: null,
+    craftSpecialty: null,
+    smithingSpecialty: null,
+    gearQty: {}, // item name -> quantity purchased
+    otherGear: [], // [{name, cost}] manual entries (General Adventuring Gear / Trade Goods)
+  };
+}
+
+/* ============================= HELPERS ============================= */
+function dieStep(idx, delta){
+  return Math.max(0, Math.min(4, idx + delta));
+}
+function arrayToDieIdx(faceVal){ return DIE_FACE.indexOf(faceVal); }
+
+// Which attribute(s) will take a NEGATIVE modifier for this origin+choices.
+// Used so the UI can simply refuse to offer a d4 (Bottom) slot to any of them —
+// no redirect needed if the conflict can never happen in the first place.
+function negativeModAttrs(c){
+  const origin = ORIGINS[c.origin];
+  const out = new Set();
+  if (origin.mod && origin.mod.fixed){
+    Object.entries(origin.mod.fixed).forEach(([a, steps]) => { if (steps < 0) out.add(a); });
+  }
+  if (origin.mod && origin.mod.choicePhysical && c.autoPhysDown){
+    out.add(c.autoPhysDown);
+  }
+  return out;
+}
+
+// Pure: computes final die-index for every ASSIGNED attribute, given current
+// attrAssign + origin modifiers. By construction (UI prevents assigning a d4
+// base to any attribute in negativeModAttrs), this never needs to floor —
+// the clamp below is a defensive fallback only.
+function computeFinalAttrs(c){
+  const origin = ORIGINS[c.origin];
+  const array = origin.array;
+  const out = {};
+  ATTRS.forEach(a => {
+    const arrIdx = c.attrAssign[a];
+    if (arrIdx === undefined) return;
+    out[a] = arrayToDieIdx(array[arrIdx]);
+  });
+  if (origin.mod && origin.mod.fixed){
+    Object.entries(origin.mod.fixed).forEach(([a, steps]) => {
+      if (out[a] !== undefined) out[a] = Math.max(0, Math.min(4, out[a] + steps));
+    });
+  }
+  if (origin.mod && origin.mod.choicePhysical){
+    if (c.autoPhysUp && out[c.autoPhysUp] !== undefined) out[c.autoPhysUp] = Math.min(4, out[c.autoPhysUp] + origin.mod.choicePhysical.up);
+    if (c.autoPhysDown && out[c.autoPhysDown] !== undefined) out[c.autoPhysDown] = Math.max(0, out[c.autoPhysDown] - origin.mod.choicePhysical.down);
+  }
+  return out;
+}
+
+function tokensToDice(tokens){
+  let d = [0,0];
+  for (let i=0;i<tokens;i++){
+    if (d[0] <= d[1] && d[0] < 4) d[0]++;
+    else if (d[1] < 4) d[1]++;
+  }
+  return d;
+}
+
+function callingConfig(c){ return c.calling ? CALLINGS[c.calling] : null; }
+function anchorPool(spec, c){
+  if (Array.isArray(spec.pool)) return spec.pool;
+  if (spec.pool==='magic') return magicSkillNames();
+  if (spec.pool==='docSecondary') {
+    const first = c.anchorChoices[0];
+    const otherMedical = first==='Alchemy' ? 'Medicine' : 'Alchemy';
+    return ['Guile', otherMedical, ...magicSkillNames()];
+  }
+  if (spec.pool==='engineerSecondary') return ['Medicine','Smithing','Alchemy',...magicSkillNames()];
+  return allChoosableSkillNames();
+}
+function baseSkillMap(c){
+  const cfg = callingConfig(c); const m = {};
+  if (!cfg) return m;
+  (cfg.fixed||[]).forEach(([n,t])=>m[n]=Math.max(m[n]||0,t));
+  (cfg.anchorChoices||[]).forEach((spec,i)=>{ const n=c.anchorChoices[i]; if(n) m[n]=Math.max(m[n]||0,spec.tokens||0); });
+  m.Horsemanship = Math.max(m.Horsemanship||0,0);
+  if (c.weaponChoice) m[c.weaponChoice]=Math.max(m[c.weaponChoice]||0,0);
+  if (c.origin==='Human') m.Craftsmanship=Math.max(m.Craftsmanship||0,1);
+  return m;
+}
+function totalFlexSpent(c){ return Object.values(c.flexAlloc||{}).reduce((a,b)=>a+(+b||0),0); }
+function grantedSkills(c){
+  const m=baseSkillMap(c);
+  Object.entries(c.flexAlloc||{}).forEach(([n,t])=>{ if(t>0) m[n]=(m[n]||0)+t; });
+  const out=Object.entries(m).map(([name,tokens])=>({name,tokens}));
+  out.forEach(g=>c.skillDice[g.name]=tokensToDice(g.tokens));
+  return out;
+}
+
+function save(){
+  const id = state.id || ('char_' + Date.now());
+  state.id = id;
+  const payload = JSON.stringify(state.character);
+  try { localStorage.setItem(id, payload); } catch(e) {}
+}
+
+/* ============================= RENDER ROOT ============================= */
+function render(){
+  const app = document.getElementById('app');
+  if (state.screen === 'list') { renderList(app); return; }
+  renderWizard(app);
+}
+
+/* ---------- LIST SCREEN ---------- */
+async function renderList(app){
+  app.innerHTML = `
+    <div class="brand"><div class="eyebrow">DELVER'S CUT • REFRESHED TEST BUILD 5</div><h1>CHARACTER CREATOR</h1></div>
+    <div class="top-actions"><button class="btn" onclick="newCharacter()">+ New Character</button><button class="btn secondary" onclick="clearAllCharacters()">Clear Saved</button></div>
+    <div id="charListWrap"><p style="text-align:center;color:#8a7a5c;font-size:13px;">Loading saved characters…</p></div>
+  `;
+  let keys = [];
+  try { keys = Object.keys(localStorage).filter(k => k.startsWith('char_')).sort(); } catch(e){ keys = []; }
+  const wrap = document.getElementById('charListWrap');
+  if (!keys.length){
+    wrap.innerHTML = `<p style="text-align:center;color:#8a7a5c;font-size:13px;">No saved characters yet. Tap "New Character" to begin.</p>`;
+    return;
+  }
+  let html = '';
+  for (const k of keys){
+    try{
+      const raw = localStorage.getItem(k);
+      const c = JSON.parse(raw);
+      html += `<div class="char-list-card">
+        <div>
+          <div class="cname">${c.name || '(unnamed)'}</div>
+          <div class="csub">${c.origin || '—'} ${c.calling || ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn small" onclick="loadCharacter('${k}')">Open</button>
+          <button class="btn small secondary" onclick="deleteCharacter('${k}')">${pendingDeleteId===k?'Confirm':'Del'}</button>
+        </div>
+      </div>`;
+    }catch(e){}
+  }
+  wrap.innerHTML = html || `<p style="text-align:center;color:#8a7a5c;font-size:13px;">No saved characters yet.</p>`;
+}
+
+function newCharacter(){
+  state.character = freshCharacter();
+  state.id = null;
+  state.screen = 'wizard';
+  state.step = 1;
+  render();
+}
+async function loadCharacter(id){
+  try{
+    const raw = localStorage.getItem(id);
+    state.character = JSON.parse(raw);
+    state.id = id;
+    state.screen = 'wizard';
+    state.step = 1;
+    render();
+  }catch(e){ alert('Could not load that character.'); }
+}
+function deleteCharacter(id){
+  if (pendingDeleteId !== id){
+    pendingDeleteId = id;
+    render();
+    return;
+  }
+  try{ localStorage.removeItem(id); }catch(e){}
+  pendingDeleteId = null;
+  render();
+}
+function clearAllCharacters(){
+  if (pendingDeleteId !== '__ALL__'){ pendingDeleteId='__ALL__'; alert('Tap Clear Saved again to permanently remove all saved test characters.'); return; }
+  try{ Object.keys(localStorage).filter(k=>k.startsWith('char_')).forEach(k=>localStorage.removeItem(k)); }catch(e){}
+  pendingDeleteId=null; render();
+}
+function backToList(){ save(); state.screen='list'; render(); }
+
+/* ---------- WIZARD SHELL ---------- */
+function renderWizard(app){
+  const dots = [1,2,3,4,5,6].map(n => {
+    let cls = 'step-dot';
+    if (n < state.step) cls += ' done';
+    if (n === state.step) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="brand"><div class="eyebrow">DELVER'S CUT • REFRESHED TEST BUILD 5</div><h1>CHARACTER CREATOR</h1></div>
+    <div class="top-actions"><button class="btn secondary small" onclick="backToList()">\u2190 Save &amp; Back to List</button></div>
+    <div class="step-bar">${dots}</div>
+    <div id="stepBody"></div>
+  `;
+  const body = document.getElementById('stepBody');
+  if (state.step===1) renderStep1(body);
+  else if (state.step===2) renderStep2(body);
+  else if (state.step===3) renderStep3(body);
+  else if (state.step===4) renderStep4(body);
+  else if (state.step===5) renderStep5(body);
+  else if (state.step===6) renderStep6(body);
+}
+
+function goStep(n){ save(); state.step = n; render(); window.scrollTo(0,0); }
+
+/* ---------- STEP 1: Basics ---------- */
+function renderStep1(body){
+  const c = state.character;
+  const originCards = Object.keys(ORIGINS).map(o => `
+    <div class="choice-card ${c.origin===o?'selected':''}" onclick="pickOrigin('${o}')">
+      <div class="name">${o}</div><div class="blurb">${ORIGINS[o].blurb}</div>
+    </div>`).join('');
+  const callingCards = Object.keys(CALLINGS).map(cl => `
+    <div class="choice-card ${c.calling===cl?'selected':''}" onclick="pickCalling('${cl}')">
+      <div class="name">${cl}</div><div class="blurb">${CALLINGS[cl].blurb}</div>
+    </div>`).join('');
+
+  let originPreview = '';
+  if (c.origin){
+    const o = ORIGINS[c.origin];
+    originPreview = `<div class="card" style="background:#fbf6e8;">
+      <h2>${c.origin} — Features</h2>
+      ${o.features.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('')}
+    </div>`;
+  }
+  let callingPreview = '';
+  if (c.calling){
+    const cl = CALLINGS[c.calling];
+    callingPreview = `<div class="card" style="background:#fbf6e8;">
+      <h2>${c.calling} — Signature Abilities</h2>
+      ${cl.abilities.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('')}
+    </div>`;
+  }
+
+  body.innerHTML = `
+    <div class="card">
+      <h2>Character Name</h2>
+      <input type="text" id="nameInput" value="${c.name || ''}" placeholder="e.g. Widow Aldrich" oninput="state.character.name=this.value">
+    </div>
+    <div class="card"><h2>Origin</h2><div class="choice-grid">${originCards}</div></div>
+    ${originPreview}
+    <div class="card"><h2>Calling</h2><div class="choice-grid">${callingCards}</div></div>
+    ${callingPreview}
+    <div class="nav-row">
+      <button class="btn" style="flex:1" onclick="goStep(2)" ${(!c.origin||!c.calling)?'disabled':''}>Next: Attributes \u2192</button>
+    </div>
+  `;
+}
+function pickOrigin(o){
+  state.character.origin = o;
+  state.character.attrFinal = {}; state.character.attrAssign = {};
+  state.character.autoPhysUp = null; state.character.autoPhysDown = null;
+  render();
+}
+function pickCalling(cl){
+  state.character.calling = cl;
+  state.character.anchorChoices = {}; state.character.weaponChoice = null; state.character.flexSkillChoices=[null,null,null,null]; state.character.flexAlloc={}; state.character.skillDice = {}; state.character.talents = [];
+  render();
+}
+
+/* ---------- STEP 2: Attributes ---------- */
+function renderStep2(body){
+  const c = state.character;
+  const origin = ORIGINS[c.origin];
+  const array = origin.array.slice(); // face values
+  const usedIdx = new Set(Object.values(c.attrAssign));
+  const negAttrs = negativeModAttrs(c); // attrs that will take a negative modifier
+  const livePreview = computeFinalAttrs(c);
+
+  const rows = ATTRS.map(a => {
+    const currentAssign = c.attrAssign[a];
+    const blockD4 = negAttrs.has(a); // this attribute takes a negative mod — no d4 base allowed
+    let opts = `<option value="">—</option>`;
+    array.forEach((face, i) => {
+      if (usedIdx.has(i) && i !== currentAssign) return;
+      if (blockD4 && face === 4) return; // Creation-Time Floor: can't combine d4 base with a negative modifier
+      opts += `<option value="${i}" ${currentAssign===i?'selected':''}>${DIE_LABEL[arrayToDieIdx(face)]}</option>`;
+    });
+    let finalDisplay = '—';
+    if (livePreview[a] !== undefined) finalDisplay = DIE_LABEL[livePreview[a]];
+    const warn = blockD4 ? `<div style="flex-basis:100%; margin:2px 0 6px 110px; font-size:11px; color:#8a7a5c;">Takes a negative modifier — d4 unavailable here (Creation-Time Floor).</div>` : '';
+    return `<div class="attr-row" style="flex-wrap:wrap;">
+      <div class="attr-name">${a}</div>
+      <select onchange="assignAttr('${a}', this.value)">${opts}</select>
+      <div class="final">${finalDisplay}</div>
+      ${warn}
+    </div>`;
+  }).join('');
+
+  let modUI = '';
+  if (origin.mod && origin.mod.choicePhysical){
+    const cp = origin.mod.choicePhysical;
+    // "down" target: exclude any physical attribute currently assigned a d4 base
+    const downEligible = PHYSICAL.filter(p => {
+      const idx = c.attrAssign[p];
+      if (idx === undefined) return true; // not yet assigned, allow pick — will restrict its base dropdown once chosen
+      return array[idx] !== 4;
+    });
+    const upOpts = PHYSICAL.map(p => `<option value="${p}" ${c.autoPhysUp===p?'selected':''}>${p}</option>`).join('');
+    const downOpts = downEligible.map(p => `<option value="${p}" ${c.autoPhysDown===p?'selected':''}>${p}</option>`).join('');
+    const blockedNote = downEligible.length < PHYSICAL.length ? `<div style="font-size:11px;color:#8a7a5c;margin-top:2px;">Physical Attributes currently at d4 aren't offered here — they can't take a negative modifier.</div>` : '';
+    modUI = `
+      <div class="card">
+        <h2>${c.origin} Attribute Modifier — Choose</h2>
+        <label>Physical Attribute +${cp.up} step${cp.up>1?'s':''}</label>
+        <select onchange="setPhysMod('up', this.value)"><option value="">—</option>${upOpts}</select>
+        <label>Physical Attribute \u2212${cp.down} step${cp.down>1?'s':''} (must differ)</label>
+        <select onchange="setPhysMod('down', this.value)"><option value="">—</option>${downOpts}</select>
+        ${blockedNote}
+      </div>`;
+  }
+
+  let originModNote = '';
+  if (origin.mod && origin.mod.fixed){
+    const parts = Object.entries(origin.mod.fixed).map(([a,s]) => `${a} ${s>0?'+':''}${s} step`);
+    originModNote = `<div class="info-box"><b>${c.origin} fixed modifier (applied automatically below):</b> ${parts.join(', ')}.</div>`;
+  }
+
+  body.innerHTML = `
+    <div class="card">
+      <h2>Assign Starting Array</h2>
+      <div class="pool-note">${c.origin} array: ${array.map(f=>'d'+f).join(', ')}. Assign each value to one Attribute below.</div>
+      ${originModNote}
+      <div class="pool-note"><b>Base</b> = value you assign. <b>Final</b> (right column) = base after Origin modifiers are applied — this is what carries forward. An Attribute taking a negative modifier can't be assigned a d4 base (Creation-Time Floor) — d4 simply won't be offered as an option for it.</div>
+      ${rows}
+    </div>
+    ${modUI}
+    <div class="nav-row">
+      <button class="btn secondary" onclick="goStep(1)">\u2190 Back</button>
+      <button class="btn" onclick="finalizeAttrsAndNext()" ${!allAttrsAssigned()?'disabled':''}>Next: Skills \u2192</button>
+    </div>
+  `;
+}
+function allAttrsAssigned(){
+  return ATTRS.every(a => state.character.attrAssign[a] !== undefined);
+}
+function assignAttr(attr, val){
+  const c = state.character;
+  if (val === '') { delete c.attrAssign[attr]; render(); return; }
+  c.attrAssign[attr] = parseInt(val,10);
+  render();
+}
+function setPhysMod(dir, val){
+  const c = state.character;
+  if (dir==='up') c.autoPhysUp = val || null;
+  else {
+    c.autoPhysDown = val || null;
+    // if the chosen "down" attribute is currently assigned a d4 base, clear that assignment —
+    // it's no longer a legal combination
+    if (val){
+      const origin = ORIGINS[c.origin];
+      const idx = c.attrAssign[val];
+      if (idx !== undefined && origin.array[idx] === 4) delete c.attrAssign[val];
+    }
+  }
+  render();
+}
+function finalizeAttrsAndNext(){
+  const c = state.character;
+  c.attrFinal = computeFinalAttrs(c);
+  goStep(3);
+}
+
+/* ---------- STEP 3: Skills ---------- */
+function normalizeSkillState(c){
+  if (!c.anchorChoices) c.anchorChoices={};
+  const maxNewSkills = (c.calling && CALLINGS[c.calling]) ? CALLINGS[c.calling].flexTokens : 2;
+  if (!Array.isArray(c.flexSkillChoices)) c.flexSkillChoices=[];
+  c.flexSkillChoices = c.flexSkillChoices.slice(0, maxNewSkills);
+  while (c.flexSkillChoices.length < maxNewSkills) c.flexSkillChoices.push(null);
+  if (!c.flexAlloc) c.flexAlloc={};
+  if (!c.talents) c.talents=[];
+}
+function usedSkillNames(c){ return new Set(grantedSkills(c).map(g=>g.name)); }
+function renderStep3(body){
+  const c=state.character; normalizeSkillState(c); const cfg=CALLINGS[c.calling];
+  const fixedRows=(cfg.fixed||[]).map(([n,t])=>`<div class="skill-slot"><div class="slot-label">Guaranteed</div><div class="fixed-name">${n} <span class="dice-tag">${DIE_LABEL[tokensToDice(t)[0]]}+${DIE_LABEL[tokensToDice(t)[1]]}</span> <span style="font-size:11px;color:#8a7a5c;">(${t} token${t===1?'':'s'})</span></div></div>`).join('');
+  const anchorRows=(cfg.anchorChoices||[]).map((spec,i)=>{
+    const current=c.anchorChoices[i]||''; let pool=anchorPool(spec,c);
+    const already=new Set(Object.entries(c.anchorChoices).filter(([k])=>+k!==i).map(([,v])=>v));
+    (cfg.fixed||[]).forEach(([n])=>already.add(n));
+    const opts=pool.filter(n=>!already.has(n)||n===current).map(n=>`<option value="${n}" ${n===current?'selected':''}>${n}</option>`).join('');
+    return `<div class="skill-slot"><div class="slot-label">${spec.label}</div><select onchange="setAnchorChoice(${i},this.value)"><option value="">— choose —</option>${opts}</select>${current?`<span class="dice-tag">${DIE_LABEL[tokensToDice(spec.tokens)[0]]}+${DIE_LABEL[tokensToDice(spec.tokens)[1]]}</span>`:''}</div>`;
+  }).join('');
+  let wpool=allowedWeaponChoices(c.calling); const occupied=new Set([...(cfg.fixed||[]).map(x=>x[0]),...Object.values(c.anchorChoices)]);
+  if(c.calling==='Trailblazer') occupied.add('Rifles');
+  wpool=wpool.filter(n=>!occupied.has(n)||n===c.weaponChoice);
+  const wopts=wpool.map(n=>`<option value="${n}" ${n===c.weaponChoice?'selected':''}>${n}</option>`).join('');
+
+  const flexPool=allChoosableSkillNames();
+  const flexRows=c.flexSkillChoices.map((cur,i)=>{
+    const occupiedNow=new Set(grantedSkills(c).map(g=>g.name)); if(cur) occupiedNow.delete(cur);
+    const opts=flexPool.filter(n=>!occupiedNow.has(n)||n===cur).map(n=>`<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+    return `<div class="skill-slot"><div class="slot-label">Optional additional Skill</div><select onchange="setFlexSkill(${i},this.value)"><option value="">— none —</option>${opts}</select></div>`;
+  }).join('');
+
+  const grantedNow=grantedSkills(c);
+  const selectedExtras=(c.flexSkillChoices||[]).filter(Boolean).filter(n=>!grantedNow.some(g=>g.name===n)).map(name=>({name,tokens:0}));
+  const skills=[...grantedNow,...selectedExtras]; const spent=totalFlexSpent(c); const left=cfg.flexTokens-spent;
+  const allocRows=skills.map(g=>{
+    const base=baseSkillMap(c)[g.name]||0; const flex=c.flexAlloc[g.name]||0; const total=base+flex;
+    const canAdd=left>0 && total<2;
+    return `<div class="skill-slot" style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div><b>${g.name}</b><br><span style="font-size:11px;color:#8a7a5c;">base ${base} + flexible ${flex} = ${total} token${total===1?'':'s'} • ${DIE_LABEL[tokensToDice(total)[0]]}+${DIE_LABEL[tokensToDice(total)[1]]}</span></div><div style="display:flex;gap:5px;"><button class="btn small secondary" onclick="bumpFlex('${g.name.replace(/'/g,"\\'")}',-1)" ${flex<=0?'disabled':''}>−</button><button class="btn small secondary" onclick="bumpFlex('${g.name.replace(/'/g,"\\'")}',1)" ${canAdd?'':'disabled'}>+</button></div></div>`;
+  }).join('');
+  const craftGranted = grantedSkills(c).some(g=>g.name==='Craftsmanship');
+  const smithGranted = grantedSkills(c).some(g=>g.name==='Smithing');
+  const craftOpts = CRAFT_SPECIALTIES.map(x=>`<option value="${x}" ${c.craftSpecialty===x?'selected':''}>${x}</option>`).join('');
+  const smithOpts = SMITHING_SPECIALTIES.map(x=>`<option value="${x}" ${c.smithingSpecialty===x?'selected':''}>${x}</option>`).join('');
+  let specialtyUI = '';
+  if (craftGranted){
+    specialtyUI += `<div class="card"><h2>Craftsmanship Specialty</h2>
+      <div class="info-box">${c.calling==='Engineer'?'<b>Apprenticeship:</b> Engineer receives Craftsmanship at 2 tokens in one Specialty. ':''}${c.origin==='Human'?'<b>Adaptable:</b> Human receives 1 Craftsmanship token at creation. ':''}Craftsmanship has 19 specialties; choose one.</div>
+      <select onchange="setCraftSpecialty(this.value)"><option value="">— choose craft —</option>${craftOpts}</select></div>`;
+  }
+  if (smithGranted){
+    specialtyUI += `<div class="card"><h2>Smithing Specialty</h2>
+      <div class="info-box">Smithing uses one chosen specialty: Gunsmith, Blacksmith (general), or Weaponsmith.</div>
+      <select onchange="setSmithingSpecialty(this.value)"><option value="">— choose specialty —</option>${smithOpts}</select></div>`;
+  }
+  const anchorsReady=(cfg.anchorChoices||[]).every((_,i)=>c.anchorChoices[i]);
+  const ready=anchorsReady && !!c.weaponChoice && left===0 && (!craftGranted || !!c.craftSpecialty) && (!smithGranted || !!c.smithingSpecialty);
+  body.innerHTML=`<div class="card"><h2>${c.calling} — Core Skills</h2>${fixedRows}${anchorRows}</div>
+  <div class="card"><h2>Universal Frontier Skills</h2><div class="info-box"><b>Horsemanship</b> is guaranteed at 0 tokens. Choose one 0-token weapon Skill. A 0-token Skill rolls 2d4 + its Attribute Export die.</div><div class="skill-slot"><div class="slot-label">Guaranteed at 0 tokens</div><div class="fixed-name">Horsemanship <span class="dice-tag">d4+d4</span></div></div><div class="skill-slot"><div class="slot-label">Weapon Skill — 0 tokens</div><select onchange="setWeaponChoice(this.value)"><option value="">— choose weapon Skill —</option>${wopts}</select></div></div>
+  <div class="card"><h2>Flexible Skill Tokens</h2><div class="cap-note">${left} of ${cfg.flexTokens} flexible token${cfg.flexTokens===1?'':'s'} remaining. Maximum 2 tokens in any Skill at creation.</div><div class="info-box"><b>${c.calling} has ${cfg.flexTokens} flexible tokens.</b> You may spend them on Horsemanship, your 0-token weapon Skill, or new Skills. Each new Skill costs at least 1 token, so you can add at most ${cfg.flexTokens} new Skill${cfg.flexTokens===1?'':'s'} if you spend one token in each.</div>${flexRows}${allocRows}</div>
+  ${specialtyUI}<div class="nav-row"><button class="btn secondary" onclick="goStep(2)">← Back</button><button class="btn" onclick="goStep(4)" ${ready?'':'disabled'}>Next: Talents →</button></div>`;
+}
+function setCraftSpecialty(val){ state.character.craftSpecialty=val||null; save(); render(); }
+function setSmithingSpecialty(val){ state.character.smithingSpecialty=val||null; save(); render(); }
+function setAnchorChoice(i,val){ const c=state.character; c.anchorChoices[i]=val||null; c.talents=[]; cleanupFlex(c); render(); }
+function setWeaponChoice(val){ const c=state.character; c.weaponChoice=val||null; c.talents=[]; cleanupFlex(c); render(); }
+function setFlexSkill(i,val){ const c=state.character; const old=c.flexSkillChoices[i]; if(old && old!==val && !baseSkillMap(c).hasOwnProperty(old)) delete c.flexAlloc[old]; c.flexSkillChoices[i]=val||null; c.talents=[]; render(); }
+function cleanupFlex(c){ const valid=new Set([...Object.keys(baseSkillMap(c)),...(c.flexSkillChoices||[]).filter(Boolean)]); Object.keys(c.flexAlloc||{}).forEach(n=>{if(!valid.has(n)) delete c.flexAlloc[n];}); }
+function bumpFlex(name,delta){ const c=state.character,cfg=CALLINGS[c.calling]; const base=baseSkillMap(c)[name]||0; const cur=c.flexAlloc[name]||0; let next=Math.max(0,cur+delta); if(base+next>2) next=2-base; if(delta>0 && totalFlexSpent(c)>=cfg.flexTokens) return; if(next===0) delete c.flexAlloc[name]; else c.flexAlloc[name]=next; c.talents=c.talents.filter(t=>{ const pool=skillStartingTalents(name)||[]; return !pool.includes(t); }); render(); }
+
+/* ---------- STEP 4: Talents & Extras ---------- */
+function selectedTalentCountForSkill(c,name){ const pool=skillStartingTalents(name)||[]; return c.talents.filter(t=>pool.includes(t)).length; }
+function renderStep4(body){
+  const c=state.character; normalizeSkillState(c); const granted=grantedSkills(c);
+  let blocks='';
+  granted.forEach(g=>{
+    const pool=skillStartingTalents(g.name); if(!pool) return;
+    const allowance=g.tokens; const used=selectedTalentCountForSkill(c,g.name); const remaining=Math.max(0,allowance-used);
+    const chips=pool.map(t=>{ const checked=c.talents.includes(t); const disabled=!checked && remaining<=0; return `<div class="talent-chip ${checked?'checked':''} ${disabled?'locked':''}" onclick="${disabled?'':`toggleTalentForSkill('${g.name.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')`}"><input type="checkbox" ${checked?'checked':''} ${disabled?'disabled':''} readonly> ${t}</div>`; }).join('');
+    blocks+=`<div class="skill-slot"><div class="subhead">${g.name} — ${allowance} Talent pick${allowance===1?'':'s'}</div><div class="pool-note">${remaining} pick${remaining===1?'':'s'} remaining for this Skill.${g.name==='Horsemanship'?' Any Horsemanship Talent may be chosen.':' Starting choices shown here are the current Tier I options.'}</div><div class="talent-list">${chips}</div></div>`;
+  });
+  const totalAllowance=granted.filter(g=>isTalentBearing(g.name)).reduce((n,g)=>n+g.tokens,0);
+  const missing=totalAllowance-c.talents.length;
+  let extrasHTML='';
+  if(c.origin==='Shade'){
+    const giftCards=SHADE_GIFTS.map(([n,cost,eff])=>{const sel=c.shadeGifts.includes(n),dis=!sel&&c.shadeGifts.length>=2;return `<div class="gift-card ${sel?'selected':''}" onclick="${dis?'':`toggleGift('${n.replace(/'/g,"\\'")}')`}"><div class="gname">${n} <span style="color:#8a7a5c;font-weight:400;">(costs ${cost} Debt)</span></div><div class="geffect">${eff}</div></div>`}).join('');
+    extrasHTML+=`<div class="card"><h2>Shade — Gifts (choose 2)</h2>${giftCards}</div>`;
+  }
+  if(c.calling==='Engineer'){
+    const opts=ENGINEER_TIER1_INVENTIONS.map(i=>`<option value="${i}" ${c.engineerInvention===i?'selected':''}>${i}</option>`).join('');
+    extrasHTML+=`<div class="card"><h2>Engineer — Starting Invention</h2><select onchange="state.character.engineerInvention=this.value"><option value="">—</option>${opts}</select></div>`;
+  }
+  body.innerHTML=`<div class="card"><h2>Starting Talents</h2><div class="cap-note">${missing} of ${totalAllowance} Talent pick${totalAllowance===1?'':'s'} remaining.</div><div class="info-box">Talent picks are now tied to each Skill's invested tokens. Weapon Skills, Engineering, Smithing, Craftsmanship, and other Talent-free Skills do not generate Talent picks.</div>${blocks||'<p class="pool-note">None of your invested Skills currently grants a Talent pick.</p>'}</div>${extrasHTML}<div class="nav-row"><button class="btn secondary" onclick="goStep(3)">← Back</button><button class="btn" onclick="goStep(5)" ${missing===0?'':'disabled'}>Next: Equipment →</button></div>`;
+}
+function toggleTalentForSkill(skill,t){ const c=state.character; const i=c.talents.indexOf(t); if(i>=0){c.talents.splice(i,1);}else{const g=grantedSkills(c).find(x=>x.name===skill);if(!g)return;if(selectedTalentCountForSkill(c,skill)>=g.tokens)return;c.talents.push(t);} render(); }
+function toggleGift(n){ const c=state.character; const i=c.shadeGifts.indexOf(n); if(i>=0)c.shadeGifts.splice(i,1); else if(c.shadeGifts.length<2)c.shadeGifts.push(n); render(); }
+
+/* ---------- STEP 5: Equipment ---------- */
+function gearTotalSpentCp(c){
+  // Compute in integer copper pieces (cp, 10 cp = 1 sp) to avoid binary
+  // floating-point drift (e.g. 0.3 + 0.4 + 0.6 !== 1.3 in JS). Every price is
+  // rounded to the nearest cp BEFORE summing, so the total is always exact.
+  let totalCp = 0;
+  Object.entries(c.gearQty).forEach(([name, qty]) => {
+    if (!qty) return;
+    for (const cat of Object.values(EQUIPMENT_CATALOG)){
+      const item = cat.find(([n]) => n === name);
+      if (item) totalCp += Math.round(item[1] * 10) * qty;
+    }
+  });
+  c.otherGear.forEach(g => { totalCp += Math.round((g.cost || 0) * 10); });
+  return totalCp;
+}
+function gearTotalSpent(c){
+  return gearTotalSpentCp(c) / 10; // sp, for display only — never used in threshold comparisons
+}
+function renderStep5(body){
+  const c = state.character;
+  const spentCp = gearTotalSpentCp(c);
+  const spent = spentCp / 10;
+  const remaining = (300 - spentCp) / 10;
+  const minOk = spentCp >= 250;  // >= 25 sp, compared in exact integer cp
+  const maxOk = (300 - spentCp) <= 50; // <= 5 sp remaining, compared in exact integer cp
+  const validBudget = minOk && maxOk;
+
+  let catHTML = '';
+  Object.entries(EQUIPMENT_CATALOG).forEach(([cat, items]) => {
+    catHTML += `<div class="card"><h2>${cat}</h2>`;
+    items.forEach(([name, cost]) => {
+      const qty = c.gearQty[name] || 0;
+      catHTML += `<div class="skill-slot" style="display:flex;justify-content:space-between;align-items:center;">
+        <div><b style="font-size:13.5px;">${name}</b><br><span style="font-size:11.5px;color:#8a7a5c;">${cost===0?'free':cost+' sp each'}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn small secondary" onclick="bumpGear('${name.replace(/'/g,"\\'")}', -1)">\u2212</button>
+          <span style="min-width:18px;text-align:center;font-weight:700;">${qty}</span>
+          <button class="btn small secondary" onclick="bumpGear('${name.replace(/'/g,"\\'")}', 1)">+</button>
+        </div>
+      </div>`;
+    });
+    catHTML += `</div>`;
+  });
+
+  const otherRows = c.otherGear.map((g, i) => `
+    <div class="skill-slot" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>${g.name} — ${g.cost} sp</div>
+      <button class="btn small secondary" onclick="removeOtherGear(${i})">Remove</button>
+    </div>`).join('');
+
+  body.innerHTML = `
+    <div class="card">
+      <h2>Budget</h2>
+      <div class="sheet-p" style="font-size:15px;"><b>Starting Budget:</b> 30 sp. Must spend at least 25 sp; may keep at most 5 sp unspent.</div>
+      <div class="sheet-p" style="font-size:16px;"><b>Spent:</b> ${spent.toFixed(1)} sp &nbsp; <b>Remaining:</b> ${remaining.toFixed(1)} sp</div>
+      ${!validBudget ? `<div class="info-box" style="border-color:var(--accent);">${!minOk ? 'Spend at least 25 sp total.' : 'You can keep at most 5 sp unspent — spend a bit more.'}</div>` : `<div class="info-box">Budget valid.</div>`}
+    </div>
+    <div class="card">
+      <h2>General Gear &amp; Trade Goods (manual entry)</h2>
+      <div class="info-box">Backpack, bedroll, rope, lantern, tools, raw materials, etc. — priced individually by your GM (roughly 1 cp\u201312 sp each). Add each item with its agreed price.</div>
+      ${otherRows}
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <input type="text" id="otherName" placeholder="Item name" style="margin-bottom:0;flex:2;">
+        <input type="text" id="otherCost" placeholder="sp" style="margin-bottom:0;flex:1;">
+        <button class="btn small" onclick="addOtherGear()">Add</button>
+      </div>
+    </div>
+    ${catHTML}
+    <div class="nav-row">
+      <button class="btn secondary" onclick="goStep(4)">\u2190 Back</button>
+      <button class="btn" onclick="goStep(6)" ${validBudget?'':'disabled'}>Next: Review \u2192</button>
+    </div>
+  `;
+}
+function bumpGear(name, delta){
+  const c = state.character;
+  const cur = c.gearQty[name] || 0;
+  const next = Math.max(0, cur + delta);
+  if (next === 0) delete c.gearQty[name]; else c.gearQty[name] = next;
+  render();
+}
+function addOtherGear(){
+  const nameEl = document.getElementById('otherName');
+  const costEl = document.getElementById('otherCost');
+  const name = (nameEl.value || '').trim();
+  const cost = parseFloat(costEl.value);
+  if (!name || isNaN(cost) || cost < 0) return;
+  state.character.otherGear.push({ name, cost });
+  render();
+}
+function removeOtherGear(i){
+  state.character.otherGear.splice(i, 1);
+  render();
+}
+
+
+function attrPoolText(c, attr){
+  const d = DIE_LABEL[c.attrFinal[attr]];
+  return `3${d}`;
+}
+function attrExportText(c, attr){
+  return DIE_LABEL[c.attrFinal[attr]];
+}
+function speedMoveValues(c){
+  const face = DIE_FACE[c.attrFinal.Speed];
+  const move = ({4:1,6:2,8:3,10:4,12:5})[face] || 1;
+  return {move, sprint:move*2};
+}
+function skillRollTextForAction(c, skill, attr){
+  const map = {};
+  grantedSkills(c).forEach(g => { map[g.name] = g.tokens; });
+  const exportDie = attrExportText(c, attr);
+  if (Object.prototype.hasOwnProperty.call(map, skill)){
+    const d = tokensToDice(map[skill]);
+    return `${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]} + ${exportDie}`;
+  }
+  return `d4 + ${exportDie} (untrained)`;
+}
+function meleeDamageText(c, weaponDamage){
+  return `${weaponDamage} + ${attrExportText(c,'Strength')}`;
+}
+function talentEffectText(name){
+  return TALENT_EFFECTS[name] || 'Effect text is not fully defined in the current Skills Master.';
+}
+function buildActionRows(c){
+  const rows = [];
+  const mv = speedMoveValues(c);
+  rows.push(`<tr><td>Move</td><td>Combat Move</td><td>${mv.move} hex${mv.move===1?'':'es'} per Maneuver</td><td>Uses 1 Maneuver.</td></tr>`);
+  rows.push(`<tr><td>Sprint</td><td>Full-turn movement</td><td>${mv.sprint} hex${mv.sprint===1?'':'es'}</td><td>Uses both Maneuvers; no Attack/Talent that turn.</td></tr>`);
+
+  Object.entries(c.gearQty).forEach(([name, qty])=>{
+    if (!qty || !WEAPON_STATS[name]) return;
+    const w = WEAPON_STATS[name];
+    if (name === 'Lasso'){
+      const foot = skillRollTextForAction(c,'Light Weapons','Coordination');
+      const mounted = skillRollTextForAction(c,'Horsemanship','Coordination');
+      rows.push(`<tr><td>Melee/Utility: Lasso</td><td>On foot: ${foot}<br>Mounted: ${mounted}</td><td>No flat damage</td><td>${w.note}</td></tr>`);
+      return;
+    }
+    const attr = (w.kind==='melee' || w.kind==='whip') ? 'Strength' : 'Coordination';
+    const hit = skillRollTextForAction(c,w.skill,attr);
+    const damage = w.kind==='melee' ? meleeDamageText(c,w.damage) : w.damage;
+    const label = (w.kind==='melee' || w.kind==='whip') ? 'Melee Attack' : 'Ranged Attack';
+    rows.push(`<tr><td>${label}: ${name}</td><td>${hit}</td><td>${damage}</td><td>${w.note||'—'}</td></tr>`);
+  });
+  return rows.join('');
+}
+
+/* ---------- STEP 6: Review & Print ---------- */
+function renderStep6(body){
+  const c = state.character;
+  c.attrFinal = computeFinalAttrs(c); // always fresh, never trust a stale snapshot
+  const health = DIE_FACE[c.attrFinal.Strength] + DIE_FACE[c.attrFinal.Fortitude] + DIE_FACE[c.attrFinal.Discipline];
+  const aura = DIE_FACE[c.attrFinal.Brains] + DIE_FACE[c.attrFinal.Presence] + DIE_FACE[c.attrFinal.Discipline];
+
+  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${DIE_LABEL[c.attrFinal[a]]} ×3</td></tr>`).join('');
+  const granted = grantedSkills(c);
+  const skillRows = granted.map(g => { const d=tokensToDice(g.tokens); return `<tr><td>${g.name}</td><td>${skillAttr(g.name)}</td><td>${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]}</td><td>${g.tokens}</td></tr>`; }).join('');
+  const talentList = c.talents.length ? c.talents.join(', ') : '—';
+  const craftLine = c.craftSpecialty ? `<div class="sheet-p"><b>Craftsmanship Specialty:</b> ${c.craftSpecialty}</div>` : '';
+  const smithLine = c.smithingSpecialty ? `<div class="sheet-p"><b>Smithing Specialty:</b> ${c.smithingSpecialty}</div>` : '';
+
+  let originExtra = '';
+  if (c.origin === 'Shade'){
+    originExtra = `<div class="sheet-sec">Shade — Gifts</div>
+      <div class="sheet-p"><b>Gifts:</b> ${c.shadeGifts.join(', ')||'—'}</div>`;
+  }
+
+
+  const gearLines = [];
+  Object.entries(c.gearQty).forEach(([name, qty]) => {
+    if (qty) gearLines.push(`${name} ×${qty}`);
+  });
+  c.otherGear.forEach(g => gearLines.push(`${g.name} (${g.cost} sp)`));
+  const gearSpent = gearTotalSpent(c);
+  const gearList = gearLines.length ? gearLines.join(', ') : '—';
+
+  body.innerHTML = `
+    <div class="card">
+      <h2>${c.name || '(unnamed)'} — ${c.origin} ${c.calling}</h2>
+      <div class="sheet-p"><b>Health:</b> ${health}   <b>Aura:</b> ${aura}</div>
+      <table class="sheet-table"><tr><th>Attribute</th><th>Value</th></tr>${attrRows}</table>
+      <table class="sheet-table"><tr><th>Skill</th><th>Attr</th><th>Dice</th><th>Tokens</th></tr>${skillRows}</table>
+      <div class="sheet-p"><b>Talents:</b> ${talentList}</div>${craftLine}${smithLine}
+      <div class="sheet-p"><b>Gear (${gearSpent.toFixed(1)} sp spent, ${(30-gearSpent).toFixed(1)} sp left):</b> ${gearList}</div>
+    </div>
+    <div class="card">
+      <h2>Export Preview</h2>
+      <div class="info-box">This is the content that will be placed in the standalone exported character sheet.</div>
+      <div id="exportPreview"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn secondary" onclick="goStep(5)">← Back</button>
+      <button class="btn" onclick="viewExportSheet()">View Export Character Sheet</button>
+    </div>
+    <div class="nav-row">
+      <button class="btn secondary" onclick="printSheet()">Print / Save PDF</button>
+      <button class="btn secondary" onclick="backToList()">Save &amp; Back to List</button>
+    </div>
+  `;
+
+  buildPrintSheet(c, health, aura, granted, originExtra, gearList, gearSpent);
+  const preview=document.getElementById('exportPreview'); if(preview){ preview.innerHTML=document.getElementById('sheet').innerHTML; }
+  save();
+}
+
+function buildPrintSheet(c, health, aura, granted, originExtraHTML, gearList, gearSpent){
+  const sheet = document.getElementById('sheet');
+  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${DIE_LABEL[c.attrFinal[a]]} ×3</td><td>${DIE_LABEL[c.attrFinal[a]]}</td></tr>`).join('');
+  const skillRows = granted.map(g => {
+    const d=tokensToDice(g.tokens);
+    return `<tr><td>${g.name}</td><td>${skillAttr(g.name)}</td><td>${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]}</td><td>${g.tokens}</td></tr>`;
+  }).join('');
+  const origin = ORIGINS[c.origin];
+  const calling = CALLINGS[c.calling];
+  const featureRows = origin.features.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('');
+  const abilityRows = calling.abilities.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('');
+  const talentRows = c.talents.length
+    ? c.talents.map(t=>`<tr><td><b>${t}</b></td><td class="sheet-effect">${talentEffectText(t)}</td></tr>`).join('')
+    : `<tr><td colspan="2">—</td></tr>`;
+  const craftLine = c.craftSpecialty ? `<div class="sheet-p"><b>Craftsmanship Specialty:</b> ${c.craftSpecialty}</div>` : '';
+  const smithLine = c.smithingSpecialty ? `<div class="sheet-p"><b>Smithing Specialty:</b> ${c.smithingSpecialty}</div>` : '';
+  const mv = speedMoveValues(c);
+  const initiativeBase = attrPoolText(c,'Speed');
+  const initiativeNote = c.calling==='Gunslinger'
+    ? 'Quick Draw: +2 in round 1 while wielding Pistols or Rifles.'
+    : 'Roll and total the Speed dice pool; highest acts first.';
+  const inventionRows = (c.calling==='Engineer' && c.engineerInvention)
+    ? `<div class="sheet-sec">Engineer Invention</div>
+       <table class="sheet-table"><tr><th>Invention</th><th>Effect</th></tr>
+       <tr><td><b>${c.engineerInvention}</b></td><td class="sheet-effect">${INVENTION_EFFECTS[c.engineerInvention]||'—'}</td></tr></table>`
+    : '';
+  const actionRows = buildActionRows(c);
+
+  sheet.innerHTML = `
+    <div class="sheet-page">
+      <div class="sheet-title"><div class="se">DELVER'S CUT</div><h2>CHARACTER SHEET</h2></div>
+      <div class="sheet-p"><b>Name:</b> ${c.name||'—'} &nbsp;&nbsp; <b>Origin:</b> ${c.origin} &nbsp;&nbsp; <b>Calling:</b> ${c.calling}</div>
+
+      <div class="sheet-core-grid">
+        <div>
+          <div class="sheet-sec">Attributes</div>
+          <table class="sheet-table"><tr><th>Attribute</th><th>Pool</th><th>Export</th></tr>${attrRows}</table>
+        </div>
+        <div>
+          <div class="sheet-sec">Core Combat</div>
+          <div class="sheet-statbox"><div>Health</div><div class="big">${health}</div></div>
+          <div class="sheet-statbox"><div>Aura</div><div class="big">${aura}</div></div>
+          <div class="sheet-statbox"><div>Initiative</div><div class="big">${initiativeBase}</div><div class="sheet-effect">${initiativeNote}</div></div>
+          <div class="sheet-statbox"><div>Combat Move / Sprint</div><div class="big">${mv.move} / ${mv.sprint} hexes</div></div>
+        </div>
+      </div>
+
+      <div class="sheet-sec">Actions</div>
+      <table class="sheet-table sheet-action-table">
+        <tr><th>Action</th><th>To Hit / Roll</th><th>Damage / Distance</th><th>Notes</th></tr>
+        ${actionRows}
+      </table>
+
+      <div class="sheet-sec">Skills</div>
+      <table class="sheet-table"><tr><th>Skill</th><th>Attr</th><th>Skill Dice</th><th>Tokens</th></tr>${skillRows}</table>
+
+      <div class="sheet-sec">Talents</div>
+      <table class="sheet-table"><tr><th>Talent</th><th>Effect</th></tr>${talentRows}</table>
+      ${craftLine}${smithLine}
+
+      <div class="sheet-sec">Origin Features — ${c.origin}</div>
+      ${featureRows}
+      <div class="sheet-p" style="margin-top:6px;"><b>Death Fate:</b> ${origin.deathFate}</div>
+
+      <div class="sheet-sec">Calling Abilities — ${c.calling}</div>
+      ${abilityRows}
+      ${inventionRows}
+      ${originExtraHTML && c.calling!=='Engineer' ? `<div class="sheet-sec">Extras</div>${originExtraHTML}` : ''}
+
+      <div class="sheet-sec">Gear (${gearSpent.toFixed(1)} sp spent, ${(30-gearSpent).toFixed(1)} sp left of 30)</div>
+      <div class="sheet-p">${gearList}</div>
+
+      <div class="sheet-sec">Conditions</div>
+      <div class="sheet-p sheet-checks">
+        <span>&#9744; Bleeding</span><span>&#9744; Poisoned</span><span>&#9744; Concussed</span>
+        <span>&#9744; Unconscious</span><span>&#9744; Hallucinating</span><span>&#9744; Fatigued</span><span>&#9744; Dying</span>
+      </div>
+    </div>
+  `;
+}
+function viewExportSheet(){
+  const c = state.character;
+  // Rebuild immediately so what is shown is always the current saved character.
+  c.attrFinal = computeFinalAttrs(c);
+  const health = DIE_FACE[c.attrFinal.Strength] + DIE_FACE[c.attrFinal.Fortitude] + DIE_FACE[c.attrFinal.Discipline];
+  const aura = DIE_FACE[c.attrFinal.Brains] + DIE_FACE[c.attrFinal.Presence] + DIE_FACE[c.attrFinal.Discipline];
+  const granted = grantedSkills(c);
+
+  let originExtra = '';
+  if (c.origin === 'Shade'){
+    originExtra = `<div class="sheet-sec">Shade — Gifts</div><div class="sheet-p"><b>Gifts:</b> ${c.shadeGifts.join(', ')||'—'}</div>`;
+  }
+  if (c.calling === 'Engineer'){
+    originExtra += `<div class="sheet-sec">Engineer — Invention</div><div class="sheet-p">${c.engineerInvention||'—'}</div>`;
+  }
+
+  const gearLines = [];
+  Object.entries(c.gearQty).forEach(([name, qty]) => { if (qty) gearLines.push(`${name} ×${qty}`); });
+  c.otherGear.forEach(g => gearLines.push(`${g.name} (${g.cost} sp)`));
+  const gearSpent = gearTotalSpent(c);
+  const gearList = gearLines.length ? gearLines.join(', ') : '—';
+
+  buildPrintSheet(c, health, aura, granted, originExtra, gearList, gearSpent);
+
+  const sheetHTML = document.getElementById('sheet').innerHTML;
+  document.body.classList.add('export-mode');
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="export-toolbar">
+      <button class="btn secondary" onclick="returnToReview()">← Back to Review</button>
+      <button class="btn" onclick="printExportView()">Print This Sheet</button>
+    </div>
+    <div class="export-document">${sheetHTML}</div>
+  `;
+  window.scrollTo(0,0);
+}
+
+function returnToReview(){
+  document.body.classList.remove('export-mode');
+  state.screen='wizard';
+  state.step=6;
+  render();
+  window.scrollTo(0,0);
+}
+
+function printExportView(){
+  try{ window.print(); }
+  catch(e){ alert('This browser/viewer blocked printing. The full export sheet is still visible on screen.'); }
+}
+
+function printSheet(){
+  try{ window.print(); }
+  catch(e){ alert('Printing is blocked in this viewer. Use Export Character Sheet instead, open the exported sheet in a browser, then print/save as PDF there.'); }
+}
+
+/* ============================= INIT ============================= */
+render();
+</script>
+</body>
+</html>

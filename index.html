@@ -103,6 +103,7 @@
   .sheet-table th, .sheet-table td{border:1px solid #b8aa88; padding:4px 6px; text-align:left;}
   .sheet-table th{background:#f2ecdd; font-size:10.5px; text-transform:uppercase;}
   .sheet-p{font-size:12px; line-height:1.5; margin:3px 0;}
+  .flavor-text{font-size:13px; line-height:1.55; font-style:italic; color:#5c4a2f; margin:2px 0 10px; padding-bottom:8px; border-bottom:1px solid #e3d5b0;}
   .sheet-checks span{margin-right:10px;}
 
   /* ===== On-screen export view ===== */
@@ -162,6 +163,7 @@ const PHYSICAL = ['Strength','Coordination','Speed','Fortitude'];
 const ORIGINS = {
   Human: {
     blurb: 'No supernatural gifts — wins through adaptability and refusal to quit.',
+    flavor: 'Humans are the glue of the Frontier — not the strongest, fastest, or most gifted, but the ones who can talk to anyone, fit in anywhere, and adjust to whatever the world throws at them next. No supernatural bargain, no altered body, no leftover soul in strange housing. Just grit, instinct, and the plain, dangerous fact of being mortal and choosing to go out into the dark anyway.',
     quote: '“You could walk into any saloon from the Barrens to the Coast and nobody would look twice. That’s not luck. That’s the whole trick.”',
     array: [4,6,6,6,6,8,8],
     mod: null,
@@ -173,6 +175,7 @@ const ORIGINS = {
   },
   Unliving: {
     blurb: 'Died once, came back changed — hard to hurt, slow to feel it.',
+    flavor: 'Something brought the Unliving back, and nobody — least of all the Unliving themselves — is entirely sure what. Wounds register as distant and dull; blood barely seems to notice it\u2019s been spilled. That reputation for absorbing harm comes at a cost: people fear what they don\u2019t understand, and a back-room trade in Frontier prosthetics has grown up around Unliving who\u2019ve lost more than their body could regrow on its own.',
     quote: '“They put two bullets in him outside the Silver Dollar. He got up, dusted off his coat, and asked who was buying the next round.”',
     array: [4,4,6,6,6,8,8],
     mod: {fixed:{Fortitude:1, Speed:-1}},
@@ -185,6 +188,7 @@ const ORIGINS = {
   },
   Shade: {
     blurb: 'A bargain with a Patron — real power, a debt that never clears.',
+    flavor: 'Every Shade made a bargain — the details are theirs alone. What\u2019s certain is the result: real power, and a debt that never quite goes away. A faint smoke smell with no source, eyes gone dark when a Gift is used, clear sight in total darkness. The oldest, most powerful Shades tend to be the worst people you\u2019ll ever meet — not because they started that way, but because indulging the bargain\u2019s vice is the only thing that buys breathing room from it.',
     quote: '“Everybody\u2019s got a price. Mine just came with horns.”',
     array: [4,4,6,6,6,8,8],
     mod: {fixed:{Presence:1, Discipline:-1}},
@@ -197,6 +201,7 @@ const ORIGINS = {
   },
   Automaton: {
     blurb: 'A soul in a built body, running on Wear instead of wounds.',
+    flavor: 'A real soul in a built body — not a machine pretending to think. Almost none remember how they got here; the self survives the crossing, the details don\u2019t. Nobody becomes an Automaton by accident: some choose it, some have it chosen for them as a capital sentence, some are Ghosts who found this instead of fading, some just wanted to stop being who they were.',
     quote: '“I don\u2019t remember my mother\u2019s name. I remember she smelled like lavender. That\u2019s got to count for something.”',
     array: [4,4,6,6,6,8,8],
     mod: {choicePhysical:{up:2, down:2}},
@@ -209,6 +214,7 @@ const ORIGINS = {
   },
   Otherfolk: {
     blurb: 'Passes for human; can step outside their own body.',
+    flavor: 'Otherfolk are not human. They are also, in every way that matters day to day, not *not* human — they eat, sleep, bleed, love, and die like anyone else on the Frontier. What they are instead is a question nobody has ever actually answered, themselves included.',
     quote: '“Ask her where she\u2019s from and she\u2019ll smile like it\u2019s a good question. She\u2019s never once answered it.”',
     array: [4,4,6,6,6,8,8],
     mod: {fixed:{Presence:-2, Discipline:2}, choicePhysical:{up:1, down:1}},
@@ -310,16 +316,39 @@ const TALENT_EFFECTS = {
   'Pugilist':'Must be unarmed. Bonus 1d4 to unarmed attack rolls.',
   'Slip the Punch':'Passive. Reduce damage from all unarmed strikes against you by 1.',
   'Hands Up':'Must be unarmed. Bonus 1d4 to Melee Defense rolls against melee or unarmed attacks.',
+  'Gut Punch':'Must be unarmed. Call this out before rolling. Make an unarmed strike — the target gets +2 to their Defense roll. On a hit, deal damage as normal and the target gains Stunned for 1 round.',
+  'Knockout':'If a target gains Concussed from one of your unarmed strikes, the DN for their Fortitude check to avoid Unconscious is 13 instead of 10.',
+  'Footwork':'Whenever you make your first successful Defense against an unarmed or melee attack in a turn, you may make one unarmed attack against that opponent as a bonus action.',
+  'Flurry':'Whenever you make your first successful unarmed strike in a turn, gain a bonus unarmed attack (against the same or another target).',
+  'Bare Knuckle Brawler':'While unarmed against an unarmed opponent, gain Expertise on all attack, Defense, and damage rolls. Gain Expertise on any roll to resist a Condition inflicted by an unarmed opponent\u2019s unarmed strikes.',
   'Dirty Fighting':'Call before rolling. Make an unarmed attack at −2; on success, deal no damage and apply Stunned, Blinded, or Deafened for 1 round.',
   'Bottle Bash':'Use an improvised weapon with Bar Brawler + Strength. Deals 1d4–1d8 damage (GM sets die by object) and may inflict Bleeding or Concussed at GM discretion.',
   'Fall Guy':'Shift your result one band better on the Fall & Unhorsed Table. Standing from Prone costs no Maneuver.',
+  'Bull Rush':'Use a Move + Attack Maneuver combination to tackle a target. Melee attack roll: Bar Brawler + Strength. On a hit, you and the target are both knocked Prone.',
+  'Chair Throw':'Same as Bottle Bash, but a ranged attack within 1 hex, using thrown weapon rules.',
+  'Kick':'Call this out before rolling. −2 to your attack roll. On a hit, deal +2 damage.',
+  'Unbreakable':'When you would take damage from an unarmed strike, roll 1d4 and reduce that damage by the result. You cannot gain Unconscious from Concussed applied by unarmed strikes.',
+  'Eye Gouge':'Call it out before rolling. Make an unarmed attack at −2. On success, deal damage as normal and the target gains Blinded for 1d6+1 rounds.',
+  'Disarm':'(Grappling, Tier III) Make a Grappling attack against an armed opponent. On a margin of 6+ in your favor, you have them grappled and they drop any weapon they were holding. All Grappling Talents require both hands free.',
   'Haggle':'5% discount on purchases/services under 5 gold.',
   'Deceive':'Bonus 1d4 to Guile checks made specifically to deceive.',
   'Persuade':'Bonus 1d4 to Guile checks made specifically to persuade.',
+  'False Identity':'While maintaining a false identity, gain Expertise on any roll made to keep it undetected. Any roll made by someone else to discern your true identity takes −2.',
+  'Work the Crowd':'Deceiving or Persuading a crowd (rather than one person) uses a DN one step higher than the crowd\u2019s rough Attitude. Gain Expertise on such rolls.',
+  'Cold Read':'Make a Guile check against the target\u2019s Attitude DN. On success, gain Expertise on future Deceive or Persuade checks against that person. Usable only once per person.',
+  'Forgery':'You may only forge a document you\u2019ve directly seen or have firsthand knowledge of. Guile check vs. Hard (13) to pass casual notice, Very Hard (17) to hold up to real scrutiny, Impossible (21) to fool an expert.',
+  'Read the Mark':'Make a Guile check against the target\u2019s Attitude DN. On success, learn key facts about them and shift their Attitude one step better toward you. Usable only once per person.',
   'Ambush':'If undetected when combat begins and the target is unaware of you, act first without an Initiative roll. First attack gains Expertise and +1d4 damage.',
+  'Into the Shadows':'In dim/no light with at least partial cover, spend an Action, Sneak check DN 13. On success, gain the Hidden Condition. Enemies detect you with a bare Brains check opposed by your Sneak check when they\u2019d reasonably look, or automatically on noise/mistake.',
   'Trapper':'Set a trap using Nature: Small DN 10/1 turn; Large DN 13/1 scene; Monster DN 17/full Layover. Choose immobilize, harm, or both when built, subject to GM discretion.',
   'Wilderness Tracking':'Make a Nature check against a GM-set DN to find or pick up a subject’s trail.',
   'Nature Survival':'Nature DN 10 to secure adequate shelter, food, water, and a workable weather read for yourself and the party for the day.',
+  'Riverwise':'Gain Expertise on checks related to driving/navigating water vehicles, fishing, underwater foraging, diving, swimming, and other water-based activities.',
+  'Hide the Trail':'Spend time covering your tracks — any attempt to track you or your group afterward takes +6 DN. Mounted alone: 2 turns. Mounted with a group: 4 turns. Unmounted, fewer than 5 people: 1 turn.',
+  'Hunter\u2019s Eye':'Nature check vs. DN 13. On success, learn whether beasts live in the area, rough population numbers, and general location details.',
+  'Wild Kinship':'Mundane, non-magical animal-handling — calm and earn the cautious trust of a wild animal.',
+  'Herbalism':'Nature check vs. DN 13 to remove one Poisoned card, or to remove Diseased.',
+  'Mortician':'Spend 1 Reagent per day to prevent one set of remains you\u2019re tending from decaying that day. Medicine check vs. DN 10 to determine cause/time of death. Lets you properly harvest useful anatomical parts from remains without ruining the material.',
   'Taming & Bonding':'Break/tame wild or hostile horses and calm a spooked animal. A successfully bonded mount gains +1 die step to Discipline while you ride it.',
   'Driver':'Control teams of 2+ harnessed horses without penalty; execute tight turns, regain control of runaways, and recover from wrecks/overturns.',
   'Cavalry':'No mounted-attack penalty. Expertise on Horsemanship checks for Charge/Overrun, Charge attack rolls, and Overrun opposed rolls.',
@@ -327,7 +356,43 @@ const TALENT_EFFECTS = {
   'Roper':'No lasso penalty from horseback. Expertise on roping/lasso rolls: Snare, Drag, Hogtie, and Catch.',
   'Racing':'Spend 10 Aura for an additional mount Move this turn; spend 20 Aura for the additional Move with no risk of strain.',
   'Mounted Marksman':'No penalty when firing a ranged weapon while mounted; cancels Rifle and other mounted weapon penalties.',
-  'Horse Trading':'When buying/selling horses or mules, roll Horsemanship dice + Presence export vs. DN 7; success changes price by your margin as a percentage.'
+  'Horse Trading':'When buying/selling horses or mules, roll Horsemanship dice + Presence export vs. DN 7; success changes price by your margin as a percentage.',
+  // Occult: Rituals
+  'Anoint':'Spend a short ritual with consecrated oil, ash, or water on a willing creature or object. Rituals check vs. DN 10. On success, target gains Expertise on their next roll to resist a curse, possession, or fear-based supernatural effect (lasts until used or end of day). Only one Anointing active on a target at a time.',
+  'Meditate':'Spend 10 minutes in uninterrupted meditation, no more than once per day. Recover Aura equal to your Brains die\u2019s face value. Taking damage or serious distraction ends the attempt before Aura is recovered.',
+  'Funeral Rites':'Consecrate one set of remains within arm\u2019s reach. Consecrated remains are protected from Spirits, Fiends, and Horrors. While the rite is in effect, you can perceive the whereabouts of the Spirit belonging to those remains as a thread of energy only you can see.',
+  'Rebuke Evil':'Opposed Rituals check against any Fiend or Horror within 5 hexes. If you win, target takes 3d8 damage and is pushed 2 hexes away. If you lose, target takes no damage but is still pushed 2 hexes away.',
+  'Scrying':'Choose a person you\u2019ve seen recently. Enter a trance and see/hear through them for 1 min/level. You\u2019re unaware of your own surroundings while Scrying; any injury ends it immediately. No control or thought-access granted.',
+  'Consecrate Weapon':'Spend 2 Aura + 1 turn to bless a weapon you\u2019re holding. Rituals check vs. DN 13. On success, for the rest of the scene it deals full damage against Spirits, Fiends, and Horrors that would otherwise resist non-silver/non-blessed harm. On failure, can\u2019t reattempt on that weapon until next scene.',
+  'Exorcism':'Opposed Rituals check against a Spirit possessing an unwilling host to force it to leave. May instead be used against a Spirit to force Spooked/Terrified and force it to flee.',
+  'Transference':'Transfer a Spirit into a willing/open host (e.g. an Unliving body or Automaton), or into an unwilling host temporarily — opposed Rituals check each round against the host\u2019s Discipline, lasting up to 1 round/level, during which the Spirit controls the host.',
+  // Occult: Beguiling
+  'Enchant Humanoid':'Spend 3 Aura, opposed Beguiling check vs. a Humanoid\u2019s Discipline. On success, target\u2019s Attitude becomes Friendly. 3 Aura/round to maintain. Ends immediately (and grants 1-day immunity) if you or a companion attacks the target.',
+  'Calm Beast':'Spend 1 Aura, opposed Beguiling check vs. a Beast\u2019s Discipline. On success, the Beast becomes neutral/docile. 1 Aura/round to maintain. Ends immediately (and grants 1-day immunity) if you or a companion attacks the Beast.',
+  'Instill Fear':'Spend 5 Aura, opposed Beguiling check vs. a Beast\u2019s or Humanoid\u2019s Discipline. On success, target gains Spooked/Terrified for 2 rounds/level, then is immune to your Instill Fear for 1 day.',
+  'Hypnotize':'Target must be willing, unaware, or already Friendly. Spend 6 Aura, opposed Beguiling check vs. Presence. On success, implant one post-hypnotic suggestion triggered by a condition you specify; fires once, fades after about a week if never triggered. No memory of receiving it; cannot be self-destructive or against the target\u2019s fundamental nature.',
+  'Beast Talk':'Spend 4 Aura, opposed Beguiling check vs. a Beast\u2019s Discipline. On success, exchange simple concepts with it for 1 min/level — ask it to lead you somewhere, warn of danger, or describe something witnessed. Answers honestly within its intelligence.',
+  'Silence':'Spend 5 Aura, opposed Beguiling check vs. any Beast, Humanoid, Spirit, Fiend, or Horror within 5 hexes. On success, target can\u2019t speak, make vocal sound, or use vocal/spoken Talents for 1 round/level. Ends early if target takes damage.',
+  'Compel':'Spend 9 Aura, opposed Beguiling check vs. a Humanoid\u2019s Discipline. On success, issue a single directive the target must attempt for up to 1 round/level, even against instinct (never an obviously/immediately lethal action). Target knows afterward and is immune for 1 day.',
+  'Command Beast':'Spend 7 Aura, opposed Beguiling check vs. a Beast\u2019s Discipline. On success, the Beast obeys direct commands for 1 round/level, even against instinct (never obviously lethal). Ends early if you or a companion harms it; 1-day immunity afterward.',
+  // Occult: Wards
+  'Mark of Truth':'Cast on a source of fire. Costs 1 Reagent, 2 Aura, once/day. For 1 hour or until extinguished, the flame acts as a living lie detector for anyone within 1 hex (except you) — dims on a lie, burns steady on truth. Two lies in a row extinguish it, ending the effect.',
+  'Glyph of Shadow':'Mark a person, object, or small area so it becomes difficult to detect by ordinary sight or Spirit-sense for 1 hour/level — camouflage, not true invisibility.',
+  'Prayer of Peace':'Ward a small area (up to 3 hexes) for 1 hour/level. The first creature attempting violence inside must beat your Wards total with a Discipline check or their action fails. Once beaten once, the ward stops affecting that scene.',
+  'Circle of Protection':'Boundary ward up to 5 hexes across. No Spirit, Fiend, or Horror may cross uninvited; one may force entry once/scene with an opposed check (at −2) vs. your Wards total. Lasts until dawn/dusk or until broken.',
+  'Protect Spirit':'(“Dodge Death”) Ward a willing creature. The next time they\u2019d drop to 0 Health and begin Dying, they\u2019re instead stabilized at 1 Health automatically, as if Triage had been used. Lasts until triggered or the following dawn.',
+  'Aura Armor':'Ward yourself or a willing ally for 1 hour/level. Whenever the warded creature takes damage, they may spend 3 Aura reactively (even off-turn) to halve that hit, rounded down.',
+  'Mark of Fate':'Mark a willing creature. The next time they\u2019d fail a roll by margin 5 or less, that result becomes a Marginal success instead. One-time use; re-marking requires a full day\u2019s gap.',
+  'Dispel':'Opposed check — your Wards total against the DN or roll the original effect was cast at — to end one ongoing Ward, curse, or Ritual within reach or sight.',
+  // Arcanum: Flamecrafting
+  'Ignite':'Spend 4 Aura to set a flammable object alight at range, or attempt to ignite something a target is wearing/holding with an opposed check vs. their Defense. No direct combat damage — utility/setup.',
+  'Flameproof':'Spend 5 Aura to ward a creature or object for 1 hour/level: takes half damage from fire and can\u2019t be set alight by mundane flame.',
+  'Combust':'Requires an existing fire source within 2 hexes of both you and target. Spend 3 Aura, opposed Arcanum check vs. Defense. On a hit, 2d6 fire damage and inflict Burning.',
+  'Extinguish':'Spend 6 Aura to instantly snuff any non-magical fire within Medium range, or remove Burning from a target — no roll required.',
+  'Circle of Fire':'Requires an existing fire source to draw from. Spend 7 Aura to conjure a 2-hex-radius ring of flame lasting 1 min/level. Anything crossing it takes 2d6 fire damage and gains Burning.',
+  'Ghost Flame':'Requires 1 Reagent and a fire source within 3 hexes. Spend 7 Aura, opposed Arcanum check vs. Defense, range 3 hexes. On a hit, 3d6 fire damage that fully affects Spirits, Fiends, and Horrors, bypassing their usual resistance.',
+  'Flame Surge':'Requires an existing fire source within 3 hexes. Spend 13 Aura + 2 Reagents to engulf a 2-hex area at range (3 hexes). Everything inside takes 4d6 fire damage, gains Burning, and flammables ignite.',
+  'Cleanse':'Spend 7 Aura to deal 5d6 damage to one evil Spirit, Fiend, or Afflicted creature within 3 hexes.'
 };
 
 const WEAPON_STATS = {
@@ -469,32 +534,38 @@ const EQUIPMENT_CATALOG = {
 const CALLINGS = {
   Gunslinger: {
     blurb:'Professional gunfighter — nerve under pressure, and a reputation that precedes them.',
-    fixed:[['Pistols',2],['Rifles',2]], anchorChoices:[], flexTokens:2,
+    flavor:'You\u2019ve put more rounds through a revolver than most folks fire in a lifetime, and it shows — in the way your hand finds the grip before your mind\u2019s even caught up, in the reputation that walks into a room a half-second ahead of you. Your fights are half-won before the first shot: your draw is faster, your aim steadier at range, and just being recognized is often enough to end trouble before it starts.',
+    fixed:[['Pistols',2],['Rifles',2]], anchorChoices:[], flexTokens:2, freeSkills:2,
     abilities:[['Quick Draw','+2 to Initiative, round 1 only, while wielding Pistols or Rifles.'],['Steady Hand','Reduce any negative Range Band modifier’s magnitude by 1.'],['Reputation','Expertise (+2) on Intimidation-adjacent checks.']],
   },
   Maverick: {
     blurb:'Improviser and social operator — audacity, bluffing, and a reputation for getting lucky.',
-    fixed:[['Guile',2]], anchorChoices:[{label:'Specialty Skill — 2 tokens', pool:'all', tokens:2}], flexTokens:2,
+    flavor:'You talk your way into rooms other people get thrown out of, and out of trouble other people don\u2019t survive. You\u2019ve never been the most trained hand at anything — you\u2019re just the one who can bluff, charm, or improvise past that fact before anyone notices. Luck seems to like you more than it should, and you\u2019ve stopped questioning why.',
+    fixed:[['Guile',2]], anchorChoices:[{label:'Specialty Skill — 2 tokens', pool:'all', tokens:2}], flexTokens:2, freeSkills:1,
     abilities:[['Innate Luck','Bonus die trigger costs 3 Aura instead of 6.'],['Fake It','+1 on untrained Skill checks.'],['Devil You Know','+1 resisting Charm, Persuasion, Intimidation, and similar effects.']],
   },
   Occultist: {
     blurb:'Interacts with the unseen — faith and protection against the supernatural.',
-    fixed:[], anchorChoices:[{label:'Magic Skill #1 — 2 tokens',pool:'magic',tokens:2},{label:'Magic Skill #2 — 2 tokens',pool:'magic',tokens:2}], flexTokens:2,
+    flavor:'You\u2019ve made a study of the things most people only pray never to meet. Spirits, Ghosts, and worse have a way of noticing you before you notice them — except you usually notice first. Faith and discipline are your armor as much as any coat or charm, and the unseen world respects you a little more than it respects everyone else, if only because it knows you can push back.',
+    fixed:[], anchorChoices:[{label:'Magic Skill #1 — 2 tokens',pool:'magic',tokens:2},{label:'Magic Skill #2 — 2 tokens',pool:'magic',tokens:2}], flexTokens:2, freeSkills:1,
     abilities:[['Prayer','Gain Prayed: recover Aura and block the next negative Condition.'],['Attuned Senses','Sense a Ghost/Spirit nearby; once per day, Discipline DN 10 to see/hear it clearly.'],['Spirit Ward','−2 damage from Spirits; bonus 1d4 resisting Spirit effects.']],
   },
   Trailblazer: {
     blurb:'Wilderness specialist — scouting, survival, and an instinct for the land.',
-    fixed:[['Nature',2],['Rifles',0]], anchorChoices:[], flexTokens:4,
+    flavor:'The frontier isn\u2019t hostile to you — it\u2019s just honest, and you\u2019ve learned to listen to what it says. You can read a trail nobody else can see, predict weather nobody else trusts, and put a rifle round on target at a range that makes other hands nervous. Where everyone else sees empty wilderness, you see a story written in broken branches and old tracks.',
+    fixed:[['Nature',2],['Rifles',0]], anchorChoices:[], flexTokens:4, freeSkills:2,
     abilities:[['Expert Hunter','Bonus 1d4 on attacks with Rifles, Bows, thrown weapons, bowie knife, hatchet, or spear.'],['Beast Bond','Tabled until the Bestiary is fully locked.'],['Blaze the Trail','Expertise on climbing checks; no movement penalty in difficult terrain.']],
   },
   Doc: {
     blurb:'Frontier medicine and snake-oil — healing under pressure.',
-    fixed:[], anchorChoices:[{label:'Medical Skill — 2 tokens',pool:['Alchemy','Medicine'],tokens:2},{label:'Secondary Skill — 2 tokens',pool:'docSecondary',tokens:2}], flexTokens:2,
+    flavor:'You\u2019ve patched up more gunshot wounds, snake bites, and fevers than most towns\u2019 actual physicians, whether or not you carry a real medical certificate. Part of what you do is genuine skill, and part of it is showmanship — a good bedside manner sells a tonic as well as any cure does. Either way, when someone\u2019s dying in front of you, you\u2019re usually the reason they don\u2019t stay that way.',
+    fixed:[], anchorChoices:[{label:'Medical Skill — 2 tokens',pool:['Alchemy','Medicine'],tokens:2},{label:'Secondary Skill — 2 tokens',pool:'docSecondary',tokens:2}], flexTokens:2, freeSkills:1,
     abilities:[['Triage','Action + 1 Reagent: stabilize and set target to 1 Health.'],['Quick Fix','1 Reagent: craft a Healing Tonic or Aura Tonic on the spot.'],['Call the Doctor','Passive discount on qualifying non-weapon goods.']],
   },
   Engineer: {
     blurb:'Technical and scientific specialist — invention, Oblivium-tech, and steam devices.',
-    fixed:[['Engineering',2],['Craftsmanship',2]], anchorChoices:[{label:'Technical Specialty — 2 tokens',pool:'engineerSecondary',tokens:2}], flexTokens:2,
+    flavor:'You see the world as a machine that just hasn\u2019t been fully taken apart yet — gears, wiring, Oblivium cores, all of it something you can understand, improve, or build from scratch given enough time and scrap. Where other people see a locked door or a broken engine, you see a puzzle with a solution, and you\u2019ve usually got the tools for it already in your pack.',
+    fixed:[['Engineering',2],['Craftsmanship',2]], anchorChoices:[{label:'Technical Specialty — 2 tokens',pool:'engineerSecondary',tokens:2}], flexTokens:2, freeSkills:2,
     abilities:[['Technical Expert','Bonus 1d4 on qualifying mechanical/technical checks.'],['Apprenticeship','Craftsmanship at 2 tokens in one Specialty, in addition to the base package.']], inventions:true,
   },
 };
@@ -739,6 +810,7 @@ function renderStep1(body){
     const o = ORIGINS[c.origin];
     originPreview = `<div class="card" style="background:#fbf6e8;">
       <h2>${c.origin} — Features</h2>
+      ${o.flavor ? `<p class="flavor-text">${o.flavor}</p>` : ''}
       ${o.features.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('')}
     </div>`;
   }
@@ -747,6 +819,7 @@ function renderStep1(body){
     const cl = CALLINGS[c.calling];
     callingPreview = `<div class="card" style="background:#fbf6e8;">
       <h2>${c.calling} — Signature Abilities</h2>
+      ${cl.flavor ? `<p class="flavor-text">${cl.flavor}</p>` : ''}
       ${cl.abilities.map(([n,e]) => `<div class="sheet-p"><b>${n}</b> — ${e}</div>`).join('')}
     </div>`;
   }
@@ -883,7 +956,7 @@ function finalizeAttrsAndNext(){
 /* ---------- STEP 3: Skills ---------- */
 function normalizeSkillState(c){
   if (!c.anchorChoices) c.anchorChoices={};
-  const maxNewSkills = (c.calling && CALLINGS[c.calling]) ? CALLINGS[c.calling].flexTokens : 2;
+  const maxNewSkills = (c.calling && CALLINGS[c.calling]) ? CALLINGS[c.calling].freeSkills : 2;
   if (!Array.isArray(c.flexSkillChoices)) c.flexSkillChoices=[];
   c.flexSkillChoices = c.flexSkillChoices.slice(0, maxNewSkills);
   while (c.flexSkillChoices.length < maxNewSkills) c.flexSkillChoices.push(null);

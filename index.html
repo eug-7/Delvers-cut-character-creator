@@ -133,6 +133,7 @@
   .sheet-statbox .big{font-size:16px;font-weight:700;color:#6e1b1b;}
   .sheet-effect{font-size:11.5px;line-height:1.4;}
   .sheet-action-table td:nth-child(1){font-weight:700;white-space:nowrap;}
+  .sheet-notes-lines{height:90px;background-image:repeating-linear-gradient(to bottom, transparent, transparent 20px, #b8aa88 20px, #b8aa88 21px); margin-top:4px;}
   @media (max-width:650px){.sheet-core-grid{grid-template-columns:1fr;}}
 
 
@@ -178,7 +179,7 @@ const ORIGINS = {
     flavor: 'Something brought the Unliving back, and nobody — least of all the Unliving themselves — is entirely sure what. Wounds register as distant and dull; blood barely seems to notice it\u2019s been spilled. That reputation for absorbing harm comes at a cost: people fear what they don\u2019t understand, and a back-room trade in Frontier prosthetics has grown up around Unliving who\u2019ve lost more than their body could regrow on its own.',
     quote: '“They put two bullets in him outside the Silver Dollar. He got up, dusted off his coat, and asked who was buying the next round.”',
     array: [4,4,6,6,6,8,8],
-    mod: {fixed:{Fortitude:1, Speed:-1}},
+    mod: {fixed:{Fortitude:2, Speed:-2}},
     features: [
       ['Death\u2019s Endurance','Recover 1 Health at the start of each turn. Immune to Bleeding. Expertise resisting fear/intimidation.'],
       ['Numb to Pain','Expertise resisting pain-based effects.'],
@@ -191,7 +192,7 @@ const ORIGINS = {
     flavor: 'Every Shade made a bargain — the details are theirs alone. What\u2019s certain is the result: real power, and a debt that never quite goes away. A faint smoke smell with no source, eyes gone dark when a Gift is used, clear sight in total darkness. The oldest, most powerful Shades tend to be the worst people you\u2019ll ever meet — not because they started that way, but because indulging the bargain\u2019s vice is the only thing that buys breathing room from it.',
     quote: '“Everybody\u2019s got a price. Mine just came with horns.”',
     array: [4,4,6,6,6,8,8],
-    mod: {fixed:{Presence:1, Discipline:-1}},
+    mod: {fixed:{Presence:2, Discipline:-2}},
     features: [
       ['Supernatural Tell','Faint smoke smell; eyes darken when a Gift is used.'],
       ['Dark Vision','Sees clearly in darkness at all times.'],
@@ -204,7 +205,7 @@ const ORIGINS = {
     flavor: 'A real soul in a built body — not a machine pretending to think. Almost none remember how they got here; the self survives the crossing, the details don\u2019t. Nobody becomes an Automaton by accident: some choose it, some have it chosen for them as a capital sentence, some are Ghosts who found this instead of fading, some just wanted to stop being who they were.',
     quote: '“I don\u2019t remember my mother\u2019s name. I remember she smelled like lavender. That\u2019s got to count for something.”',
     array: [4,4,6,6,6,8,8],
-    mod: {choicePhysical:{up:2, down:2}},
+    mod: {choicePhysical:{up:5, down:5}},
     features: [
       ['Immunities','Poisoned, Diseased, Drowning/Suffocating. Can\u2019t swim (walks submerged, half Move). No hunger/thirst.'],
       ['Natural Armor','Flat DR 2, stacks with worn armor, never degrades.'],
@@ -217,7 +218,7 @@ const ORIGINS = {
     flavor: 'Otherfolk are not human. They are also, in every way that matters day to day, not *not* human — they eat, sleep, bleed, love, and die like anyone else on the Frontier. What they are instead is a question nobody has ever actually answered, themselves included.',
     quote: '“Ask her where she\u2019s from and she\u2019ll smile like it\u2019s a good question. She\u2019s never once answered it.”',
     array: [4,4,6,6,6,8,8],
-    mod: {fixed:{Presence:-2, Discipline:2}, choicePhysical:{up:1, down:1}},
+    mod: {fixed:{Presence:-5, Discipline:5}, choicePhysical:{up:2, down:2}},
     features: [
       ['Astral Projection','5\u201310 min prep, 1/day. Duration 1 min/level. True Spirit while projecting.'],
       ['Telepathy','Simple message into another mind. Free use.'],
@@ -239,7 +240,16 @@ const SHADE_GIFTS = [
 
 const SKILL_CATALOG = {
   weapon: { list:['Light Weapons','Heavy Weapons','Bows','Pistols','Rifles'] },
-  magic: { list:{
+  magic: {
+    attrs: {
+      'Occult: Rituals': 'Discipline',
+      'Occult: Beguiling': 'Presence',
+      'Occult: Wards': 'Discipline',
+      'Arcanum: Flamecrafting': 'Brains',
+      'Arcanum: Summoning': 'Presence',
+      'Arcanum: Spirit Craft': 'Brains',
+    },
+    list:{
     'Occult: Rituals': ['Anoint','Meditate','Funeral Rites'],
     'Occult: Beguiling': ['Enchant Humanoid','Instill Fear','Calm Beast'],
     'Occult: Wards': ['Mark of Truth','Glyph of Shadow','Prayer of Peace'],
@@ -273,7 +283,7 @@ function magicSkillNames(){ return Object.keys(SKILL_CATALOG.magic.list); }
 function weaponAttr(name){ return name==='Heavy Weapons' ? 'Strength' : 'Coordination'; }
 function skillAttr(name){
   if (SKILL_CATALOG.weapon.list.includes(name)) return weaponAttr(name);
-  if (SKILL_CATALOG.magic.list[name]) return 'Brains';
+  if (SKILL_CATALOG.magic.attrs[name]) return SKILL_CATALOG.magic.attrs[name];
   if (SKILL_CATALOG.talent[name]) return SKILL_CATALOG.talent[name].attr;
   if (SKILL_CATALOG.flat.list[name]) return SKILL_CATALOG.flat.list[name];
   return '?';
@@ -294,7 +304,7 @@ function allowedWeaponChoices(calling){
 
 const CRAFT_SPECIALTIES = [
   'Bowyer','Cabinetmaker','Carpenter','Carver','Cobbler','Cooper','Engraver','Fletcher',
-  'Furniture Maker','Glassblower','Harness Maker','Jeweler','Leatherworker','Mason','Potter',
+  'Furniture Maker','Glassblower','Harness Maker','Ironworker','Jeweler','Leatherworker','Mason','Potter',
   'Saddler','Shipwright','Tailor','Weaver'
 ];
 const SMITHING_SPECIALTIES = ['Gunsmith','Blacksmith (general)','Weaponsmith'];
@@ -329,7 +339,14 @@ const TALENT_EFFECTS = {
   'Kick':'Call this out before rolling. −2 to your attack roll. On a hit, deal +2 damage.',
   'Unbreakable':'When you would take damage from an unarmed strike, roll 1d4 and reduce that damage by the result. You cannot gain Unconscious from Concussed applied by unarmed strikes.',
   'Eye Gouge':'Call it out before rolling. Make an unarmed attack at −2. On success, deal damage as normal and the target gains Blinded for 1d6+1 rounds.',
-  'Disarm':'(Grappling, Tier III) Make a Grappling attack against an armed opponent. On a margin of 6+ in your favor, you have them grappled and they drop any weapon they were holding. All Grappling Talents require both hands free.',
+  'Clinch':'(Grappling, Tier I) Expertise on your check to establish a Grapple, or to resist someone else establishing one on you — only for that opening exchange, before either of you is already in an active Grapple.',
+  'Escape Hold':'(Grappling, Tier I) Expertise on any check to escape a Grapple, Restrained, or Entangled — your own attempt or an ally spending an Action to free you.',
+  'Trip':'(Grappling, Tier I) Must be declared before your attack roll — committing to a Trip instead of a normal attack. Opposed check: Grappling vs. their Defense. On success, no damage; target is knocked Prone.',
+  'Throw':'(Grappling, Tier II) Requires an active Grapple. Action, opposed check: Grappling vs. their Strength. On success, throw them 1-2 hexes; they take 1d6 damage and land Prone. The Grapple ends immediately.',
+  'Chokehold':'(Grappling, Tier II) Requires an active Grapple. Action, opposed check: Grappling vs. their Fortitude. On success, target begins Suffocating for as long as you maintain the hold (a Maneuver each following turn, not a full Action) — breaks instantly if the Grapple is broken.',
+  'Pin':'(Grappling, Tier II) Requires the target Prone and within your active Grapple. Grappling check with Expertise to secure. While pinned, the target takes −2 on any non-grappling melee attack against you.',
+  'Iron Grip':'(Grappling, Tier III) Anyone escaping a Grapple, Restrained condition, or Pin you\u2019ve inflicted takes −2. Once per scene, a failed check to establish/maintain a Grapple instead automatically succeeds.',
+  'Disarm':'(Grappling, Tier III) Melee attack vs. an adjacent target — no active Grapple required. Opposed check: Grappling vs. their Strength. On success, strip a weapon/held item from their grip — drops to the ground or you seize it.',
   'Haggle':'5% discount on purchases/services under 5 gold.',
   'Deceive':'Bonus 1d4 to Guile checks made specifically to deceive.',
   'Persuade':'Bonus 1d4 to Guile checks made specifically to persuade.',
@@ -339,6 +356,26 @@ const TALENT_EFFECTS = {
   'Forgery':'You may only forge a document you\u2019ve directly seen or have firsthand knowledge of. Guile check vs. Hard (13) to pass casual notice, Very Hard (17) to hold up to real scrutiny, Impossible (21) to fool an expert.',
   'Read the Mark':'Make a Guile check against the target\u2019s Attitude DN. On success, learn key facts about them and shift their Attitude one step better toward you. Usable only once per person.',
   'Ambush':'If undetected when combat begins and the target is unaware of you, act first without an Initiative roll. First attack gains Expertise and +1d4 damage.',
+  'Fleet of Foot':'(Sneak, Tier I) Passive. Removes the normal halved-Combat-Move penalty for actively sneaking — move at full Combat Move while sneaking with no check penalty.',
+  'Eavesdropper':'(Sneak, Tier II) Action, Sneak check DN 10, to listen in on a conversation from a hidden/partially-concealed position. Success: hear everything said for as long as you hold position. Failure: only fragments, possibly drawing attention.',
+  'Disguise':'(Sneak, Tier II) Spend 10 minutes and materials to alter your appearance. Make a Sneak check — the result becomes the DN anyone must beat (opposed Brains) to see through it. Casual scrutiny never triggers the check, only close inspection or suspicion.',
+  'Infiltrator':'(Sneak, Tier III) Expertise on all Sneak checks made bypassing security, entering restricted areas, or moving through a guarded location undetected. Once per scene, treat a failed Sneak check as a Marginal success instead.',
+  'Assassinate':'(Sneak, Tier III) If you attack a target while Hidden or unaware of you, the attack automatically hits — no roll — dealing max weapon damage plus your Strength or Coordination pool. Ends your Hidden Condition, as normal.',
+  'Sleight of Hand':'(Legerdemain, Tier I) Legerdemain check (opposed by Brains, if anyone might notice) to lift a small item, palm an object unseen, or pull off a hand trick. Baseline check the rest of the tree builds on.',
+  'Conceal Object':'(Legerdemain, Tier I) Hide a small item on your person. Anyone searching you must beat your Legerdemain check (opposed, their Brains) to find it — a cursory pat-down never finds it automatically.',
+  'Pick Locks':'(Legerdemain, Tier I) Expertise on Legerdemain checks to pick locks. Untrained characters can still attempt lockpicking via Coordination + Legerdemain, just without this bonus.',
+  'Light Fingers':'(Legerdemain, Tier II) Requires Sleight of Hand. Expertise on Legerdemain checks to pick a pocket or lift an item unnoticed — can be folded into an ordinary social moment (a bump, a handshake) with no separate Action.',
+  'Cardsharp':'(Legerdemain, Tier II) Manipulate cards/dice undetected. Legerdemain check, opposed only by someone specifically watching for cheating. On success, set the outcome (within reason) or gain a bonus 1d6 on a gambling check.',
+  'Quick Draw Hidden':'(Legerdemain, Tier II) Requires a weapon concealed via Conceal Object or a hidden holster. Draw and attack as a single Action instead of draw-then-attack. If the target didn\u2019t know you were armed, they get no Defense roll against this first strike.',
+  'Master Thief':'(Legerdemain, Tier III) Expertise on all Legerdemain checks — pickpocketing, concealment, lockpicking alike. Once per scene, treat a failed Legerdemain check as a Marginal success instead.',
+  'Vanish the Evidence':'(Legerdemain, Tier III) Action: make anything you\u2019re holding vanish from view with impossible speed. Anyone watching, even staring at you, must beat your Legerdemain check (opposed, their Brains) to know where it went.',
+  'Barber':'(Medicine, Tier I) Spend a few minutes + 1 Reagent to automatically remove Bleeding from a willing patient outside combat, no roll. +1d4 to Disguise checks you assist with. Once per month, give a patient +1 to Presence checks for 1 day.',
+  'Druggist':'(Medicine, Tier I) Spend 1 Reagent, Medicine check vs. DN 10, to brew a basic remedy: a pain-numbing draught (Expertise on next Fortitude check to resist pain) or a rousing tonic (removes one Fatigued). Choose effect when brewed; keeps about a week.',
+  'Dentist':'(Medicine, Tier II) Spend 1 Reagent, Medicine check vs. DN 13, to treat an infected tooth/facial wound before it worsens — prevents a Diseased Condition from taking hold from that injury, or removes a mild case caught early.',
+  'Doctor':'(Medicine, Tier II) +1 to any Medicine roll extracting/removing something from a body (bullet, shrapnel). May spend Reagents to remove any non-magical medical Condition from a patient who then Rests — cost/duration by GM discretion on severity.',
+  'Veterinarian':'(Medicine, Tier II) Perform any of your other Medicine Talents on Beasts and mounts, exactly as on a Humanoid patient.',
+  'Surgeon':'(Medicine, Tier III) Perform amputations and complicated surgeries. If a patient died under a minute ago, attempt to revive: Medicine check vs. DN 17, requires surgical tools. On a living patient, once/day, up to 30 min and 4 Reagents — each Reagent heals 5 Health and 5 Aura. Requires a medical bag.',
+  'Physician':'(Medicine, Tier III — mad-science capstone) Once/day, spend 2 Reagents, Medicine check vs. DN 17, to stabilize and restore a Dying patient to full Health in one treatment — leaves a visible, unsettling mark that never fully fades, and a GM-set complication may follow.',
   'Into the Shadows':'In dim/no light with at least partial cover, spend an Action, Sneak check DN 13. On success, gain the Hidden Condition. Enemies detect you with a bare Brains check opposed by your Sneak check when they\u2019d reasonably look, or automatically on noise/mistake.',
   'Trapper':'Set a trap using Nature: Small DN 10/1 turn; Large DN 13/1 scene; Monster DN 17/full Layover. Choose immobilize, harm, or both when built, subject to GM discretion.',
   'Wilderness Tracking':'Make a Nature check against a GM-set DN to find or pick up a subject’s trail.',
@@ -392,7 +429,25 @@ const TALENT_EFFECTS = {
   'Circle of Fire':'Requires an existing fire source to draw from. Spend 7 Aura to conjure a 2-hex-radius ring of flame lasting 1 min/level. Anything crossing it takes 2d6 fire damage and gains Burning.',
   'Ghost Flame':'Requires 1 Reagent and a fire source within 3 hexes. Spend 7 Aura, opposed Arcanum check vs. Defense, range 3 hexes. On a hit, 3d6 fire damage that fully affects Spirits, Fiends, and Horrors, bypassing their usual resistance.',
   'Flame Surge':'Requires an existing fire source within 3 hexes. Spend 13 Aura + 2 Reagents to engulf a 2-hex area at range (3 hexes). Everything inside takes 4d6 fire damage, gains Burning, and flammables ignite.',
-  'Cleanse':'Spend 7 Aura to deal 5d6 damage to one evil Spirit, Fiend, or Afflicted creature within 3 hexes.'
+  'Cleanse':'Spend 7 Aura to deal 5d6 damage to one evil Spirit, Fiend, or Afflicted creature within 3 hexes.',
+  // Arcanum: Summoning
+  'Spirit Assistance':'Spend 4 Aura + a Maneuver to call on an unseen spirit. Gain a bonus 1d6 die (summed into the pool) on your next Skill check this scene. No physical manifestation.',
+  'Summon Animal Helper':'Spend 5 Aura + a 10-min ritual (out of combat) to conjure a Familiar — a small animal spirit (form fixed when learned: owl, raccoon, cat, snake, rat, hawk, etc.) that follows commands, scouts, fetches, and lets you perceive through its senses (Maneuver). Health 6, no real attack (1d4 nuisance if it must defend). Dissipates at 0 Health; resummon after your next Rest for another 5 Aura. No ongoing upkeep.',
+  'Summon Spirit Guardian':'Spend 5 Aura + a Maneuver to conjure a protective spirit near you. Health 8, no attack — once per round it may intercept a melee or ranged attack aimed at you, redirecting the hit to itself. Lasts until destroyed or the scene ends.',
+  'Summon Homunculus':'Spend 7 Aura + a 10-min ritual to animate a small alchemical construct, Health 12, Combat Move 4. Follows complex instructions and performs one skilled task per round using your own Skill dice. Attack if needed: To-Hit Coordination (3d6), Damage 1d4 + Strength (3d4). Dissipates at 0 Health; resummon for another 7 Aura.',
+  'Summon Shadow':'Spend 7 Aura + a Maneuver in dim light/darkness to peel a spirit from your shadow. Moves through any shadow-sized gap; first attack each combat auto-counts as a Clear success. Health 10, To-Hit Coordination (3d8), Damage 1d6 + Strength (3d6). Cannot manifest in full daylight — dissipates immediately if forced into it.',
+  'Summon Swarm':'Spend 7 Aura + a Maneuver to call a swarm (locusts/bats/rats, chosen when learned) filling a 2-hex area within Medium range. Anyone there at the start of their turn takes 1d6 damage and −2 to all checks until they leave. No Health; disperses after 3 rounds or on dismissal (free action).',
+  'Create Simulacrum':'Spend 12 Aura + a full round, Summoning check vs. DN Hard (13), to conjure a duplicate of yourself — same appearance/current Health, no Skills/Talents, follows your commands. Aura spent either way. On failure, it manifests anyway but acts on confused impulses, GM discretion, no friend/foe distinction.',
+  'Summon Fiend':'Spend 12 Aura + a full round, Summoning check vs. DN Hard (13), to bind a Fiend to temporary service (GM\u2019s choice, capped at your Renown tier). Aura spent either way. On failure, the binding fails and the Fiend manifests hostile and free.',
+  // Arcanum: Spirit Craft
+  'Séance':'Spend 4 Aura + 10 min of uninterrupted ritual to open communication with a Spirit. Within Medium range, or with its remains/personal effect, contact is automatic; further requires a Spirit Craft check (DN 10 same settlement, 13 same region, 17 elsewhere — a personal effect lowers the band by one). Ask up to 3 questions; answered honestly within what it knows, tone/cooperation at GM discretion.',
+  'Ghost Touch':'Spend 5 Aura as a Maneuver. Until end of scene, unarmed/melee weapon attacks become partially spectral — ignore physical armor and can strike incorporeal targets (Spirits, some Fiends) otherwise immune to your weapon.',
+  'Revenant\u2019s Chill':'Spend 5 Aura, touch attack (opposed Spirit Craft vs. their Fortitude). On success, 2d6 cold damage and Chilled (−2 physical rolls until end of their next turn).',
+  'Command Spirit':'Spend 6 Aura to issue a single command to a Spirit you can perceive (opposed Spirit Craft vs. its Discipline). On success, it must carry out one simple command within its nature. Requires a prior Séance with it, or an already-hostile/engaged Spirit.',
+  'Shadow Strike':'Spend 7 Aura, Spirit Craft attack (opposed vs. Defense) against any target type in melee reach. On a hit, deals Aura damage (not Health) equal to a reroll of your Spirit Craft die.',
+  'Gasp of the Drowned':'Spend 7 Aura, opposed Spirit Craft vs. Fortitude, Medium range. On success, target gains Suffocating (2 counters, −1 at end of each of their turns); can\u2019t speak/cast/act unless they beat a DN Hard (13) Fortitude check each turn. Bypasses normal Suffocating immunity (e.g. Unliving).',
+  'Bind Spirit':'Spend 8 Aura + a full round, Spirit Craft check vs. DN Hard (13) against a perceivable Spirit. Aura spent either way. On success, the Spirit is bound to your service until released/renewed. On failure, it becomes hostile.',
+  'Banshee Cry':'Spend 10 Aura + a full round: spectral scream, 3-hex radius centered on you. Everyone in range takes 3d8 damage (opposed Spirit Craft vs. their Fortitude, half on their success) and is Frightened for 2 rounds regardless of outcome.'
 };
 
 const WEAPON_STATS = {
@@ -583,7 +638,7 @@ function freshCharacter(){
   return {
     name: '', origin: null, calling: null,
     attrAssign: {}, // attr -> array index used
-    attrFinal: {},  // attr -> die index (0-4)
+    attrFinal: {},  // attr -> [dieIdx, dieIdx, dieIdx] (0-4 each), the 3-die pool after Origin modifiers
     autoPhysUp: null, autoPhysDown: null, // Automaton/Otherfolk choice
     anchorChoices: {}, // anchor index -> skillName
     weaponChoice: null,
@@ -621,10 +676,34 @@ function negativeModAttrs(c){
   return out;
 }
 
-// Pure: computes final die-index for every ASSIGNED attribute, given current
-// attrAssign + origin modifiers. By construction (UI prevents assigning a d4
-// base to any attribute in negativeModAttrs), this never needs to floor —
-// the clamp below is a defensive fallback only.
+// Distributes a signed number of INDIVIDUAL die-steps across a 3-die pool,
+// starting from a common base index, as evenly as possible — same "waterfall"
+// spirit as tokensToDice, generalized to 3 dice and either direction. This is
+// the app's automatic implementation of "freely distributed across the pool's
+// dice" (Character Creation Master, Step 1) — it may leave the pool unevenly
+// stepped, which is expected and normal (Attributes Core Master).
+function distributeAttrSteps(baseIdx, steps){
+  const dice = [baseIdx, baseIdx, baseIdx];
+  const dir = steps > 0 ? 1 : -1;
+  let remaining = Math.abs(steps);
+  while (remaining > 0){
+    let pick = 0;
+    for (let i=1;i<3;i++){
+      if (dir > 0 ? dice[i] < dice[pick] : dice[i] > dice[pick]) pick = i;
+    }
+    if (dir > 0 && dice[pick] >= 4) break;   // whole pool maxed at d12
+    if (dir < 0 && dice[pick] <= 0) break;   // whole pool floored at d4
+    dice[pick] += dir;
+    remaining--;
+  }
+  return dice;
+}
+
+// Pure: computes the final 3-die pool for every ASSIGNED attribute, given
+// current attrAssign + origin modifiers. Returns {attr: [i,i,i]}. By
+// construction (UI prevents assigning a d4 base to any attribute taking a
+// negative modifier), distributeAttrSteps's floor-at-0 branch is a defensive
+// fallback only, not something that should trigger in normal use.
 function computeFinalAttrs(c){
   const origin = ORIGINS[c.origin];
   const array = origin.array;
@@ -632,22 +711,44 @@ function computeFinalAttrs(c){
   ATTRS.forEach(a => {
     const arrIdx = c.attrAssign[a];
     if (arrIdx === undefined) return;
-    out[a] = arrayToDieIdx(array[arrIdx]);
+    const baseIdx = arrayToDieIdx(array[arrIdx]);
+    let steps = 0;
+    if (origin.mod && origin.mod.fixed && origin.mod.fixed[a] !== undefined) steps += origin.mod.fixed[a];
+    if (origin.mod && origin.mod.choicePhysical){
+      if (c.autoPhysUp === a) steps += origin.mod.choicePhysical.up;
+      if (c.autoPhysDown === a) steps -= origin.mod.choicePhysical.down;
+    }
+    out[a] = steps === 0 ? [baseIdx, baseIdx, baseIdx] : distributeAttrSteps(baseIdx, steps);
   });
-  if (origin.mod && origin.mod.fixed){
-    Object.entries(origin.mod.fixed).forEach(([a, steps]) => {
-      if (out[a] !== undefined) out[a] = Math.max(0, Math.min(4, out[a] + steps));
-    });
-  }
-  if (origin.mod && origin.mod.choicePhysical){
-    if (c.autoPhysUp && out[c.autoPhysUp] !== undefined) out[c.autoPhysUp] = Math.min(4, out[c.autoPhysUp] + origin.mod.choicePhysical.up);
-    if (c.autoPhysDown && out[c.autoPhysDown] !== undefined) out[c.autoPhysDown] = Math.max(0, out[c.autoPhysDown] - origin.mod.choicePhysical.down);
-  }
   return out;
 }
 
+// Display helper: pool array -> "d6 ×3" if matched, or "1d6+2d8" style
+// (smallest first) if the pool is mid-advancement/mismatched.
+function formatPool(pool){
+  if (!pool) return '—';
+  if (pool[0]===pool[1] && pool[1]===pool[2]) return `${DIE_LABEL[pool[0]]} \u00d73`;
+  const counts = {};
+  pool.forEach(i => counts[i] = (counts[i]||0)+1);
+  return Object.keys(counts).map(Number).sort((a,b)=>a-b)
+    .map(i => `${counts[i]}${DIE_LABEL[i]}`).join('+');
+}
+// The Export die is always the smallest die currently in the pool
+// (Attributes Core Master — same "no credit until the whole Attribute
+// catches up" principle used for Health/Aura point-value).
+function minPoolIdx(pool){ return Math.min(...pool); }
+// Starting gold bonus reads the single HIGHEST die currently showing in the
+// pool (Character Creation Master, Step 8) — the opposite convention from
+// point-value/export, deliberately, since this is a one-time creation bonus
+// rather than a repeatable in-play roll.
+function maxPoolFace(pool){ return DIE_FACE[Math.max(...pool)]; }
+// 30 sp base + Discipline's highest current die (Character Creation Master, Step 8).
+function startingBudget(c){
+  return 30 + (c.attrFinal && c.attrFinal.Discipline ? maxPoolFace(c.attrFinal.Discipline) : 0);
+}
+
 function tokensToDice(tokens){
-  let d = [0,0];
+  let d = [1,1]; // Skills now start at d6 (index 1), not d4 — Skills Master, Section 1
   for (let i=0;i<tokens;i++){
     if (d[0] <= d[1] && d[0] < 4) d[0]++;
     else if (d[1] < 4) d[1]++;
@@ -869,7 +970,7 @@ function renderStep2(body){
       opts += `<option value="${i}" ${currentAssign===i?'selected':''}>${DIE_LABEL[arrayToDieIdx(face)]}</option>`;
     });
     let finalDisplay = '—';
-    if (livePreview[a] !== undefined) finalDisplay = DIE_LABEL[livePreview[a]];
+    if (livePreview[a] !== undefined) finalDisplay = formatPool(livePreview[a]);
     const warn = blockD4 ? `<div style="flex-basis:100%; margin:2px 0 6px 110px; font-size:11px; color:#8a7a5c;">Takes a negative modifier — d4 unavailable here (Creation-Time Floor).</div>` : '';
     return `<div class="attr-row" style="flex-wrap:wrap;">
       <div class="attr-name">${a}</div>
@@ -998,21 +1099,27 @@ function renderStep3(body){
   const smithGranted = grantedSkills(c).some(g=>g.name==='Smithing');
   const craftOpts = CRAFT_SPECIALTIES.map(x=>`<option value="${x}" ${c.craftSpecialty===x?'selected':''}>${x}</option>`).join('');
   const smithOpts = SMITHING_SPECIALTIES.map(x=>`<option value="${x}" ${c.smithingSpecialty===x?'selected':''}>${x}</option>`).join('');
+  const craftIsCustom = !!c.craftSpecialty && !CRAFT_SPECIALTIES.includes(c.craftSpecialty);
+  const smithIsCustom = !!c.smithingSpecialty && !SMITHING_SPECIALTIES.includes(c.smithingSpecialty);
   let specialtyUI = '';
   if (craftGranted){
     specialtyUI += `<div class="card"><h2>Craftsmanship Specialty</h2>
-      <div class="info-box">${c.calling==='Engineer'?'<b>Apprenticeship:</b> Engineer receives Craftsmanship at 2 tokens in one Specialty. ':''}${c.origin==='Human'?'<b>Adaptable:</b> Human receives 1 Craftsmanship token at creation. ':''}Craftsmanship has 19 specialties; choose one.</div>
-      <select onchange="setCraftSpecialty(this.value)"><option value="">— choose craft —</option>${craftOpts}</select></div>`;
+      <div class="info-box">${c.calling==='Engineer'?'<b>Apprenticeship:</b> Engineer receives Craftsmanship at 2 tokens in one Specialty. ':''}${c.origin==='Human'?'<b>Adaptable:</b> Human receives 1 Craftsmanship token at creation. ':''}Craftsmanship has 20 specialties; choose one, or pick "Other" to type your own.</div>
+      <select onchange="setCraftSpecialty(this.value)"><option value="">— choose craft —</option>${craftOpts}<option value="__other__" ${craftIsCustom?'selected':''}>Other (type your own)</option></select>
+      ${craftIsCustom ? `<input type="text" value="${(c.craftSpecialty==='__other__'?'':c.craftSpecialty).replace(/"/g,'&quot;')}" placeholder="Type your specialty" oninput="state.character.craftSpecialty=this.value" onchange="save();render();" style="margin-top:6px;">` : ''}</div>`;
   }
   if (smithGranted){
     specialtyUI += `<div class="card"><h2>Smithing Specialty</h2>
-      <div class="info-box">Smithing uses one chosen specialty: Gunsmith, Blacksmith (general), or Weaponsmith.</div>
-      <select onchange="setSmithingSpecialty(this.value)"><option value="">— choose specialty —</option>${smithOpts}</select></div>`;
+      <div class="info-box">Smithing uses one chosen specialty: Gunsmith, Blacksmith (general), or Weaponsmith — or pick "Other" to type your own.</div>
+      <select onchange="setSmithingSpecialty(this.value)"><option value="">— choose specialty —</option>${smithOpts}<option value="__other__" ${smithIsCustom?'selected':''}>Other (type your own)</option></select>
+      ${smithIsCustom ? `<input type="text" value="${(c.smithingSpecialty==='__other__'?'':c.smithingSpecialty).replace(/"/g,'&quot;')}" placeholder="Type your specialty" oninput="state.character.smithingSpecialty=this.value" onchange="save();render();" style="margin-top:6px;">` : ''}</div>`;
   }
   const anchorsReady=(cfg.anchorChoices||[]).every((_,i)=>c.anchorChoices[i]);
-  const ready=anchorsReady && !!c.weaponChoice && left===0 && (!craftGranted || !!c.craftSpecialty) && (!smithGranted || !!c.smithingSpecialty);
+  const ready=anchorsReady && !!c.weaponChoice && left===0
+    && (!craftGranted || (!!c.craftSpecialty && c.craftSpecialty!=='__other__'))
+    && (!smithGranted || (!!c.smithingSpecialty && c.smithingSpecialty!=='__other__'));
   body.innerHTML=`<div class="card"><h2>${c.calling} — Core Skills</h2>${fixedRows}${anchorRows}</div>
-  <div class="card"><h2>Universal Frontier Skills</h2><div class="info-box"><b>Horsemanship</b> is guaranteed at 0 tokens. Choose one 0-token weapon Skill. A 0-token Skill rolls 2d4 + its Attribute Export die.</div><div class="skill-slot"><div class="slot-label">Guaranteed at 0 tokens</div><div class="fixed-name">Horsemanship <span class="dice-tag">d4+d4</span></div></div><div class="skill-slot"><div class="slot-label">Weapon Skill — 0 tokens</div><select onchange="setWeaponChoice(this.value)"><option value="">— choose weapon Skill —</option>${wopts}</select></div></div>
+  <div class="card"><h2>Universal Frontier Skills</h2><div class="info-box"><b>Horsemanship</b> is guaranteed at 0 tokens. Choose one 0-token weapon Skill. A 0-token Skill rolls 2d6 + its Attribute Export die.</div><div class="skill-slot"><div class="slot-label">Guaranteed at 0 tokens</div><div class="fixed-name">Horsemanship <span class="dice-tag">d6+d6</span></div></div><div class="skill-slot"><div class="slot-label">Weapon Skill — 0 tokens</div><select onchange="setWeaponChoice(this.value)"><option value="">— choose weapon Skill —</option>${wopts}</select></div></div>
   <div class="card"><h2>Flexible Skill Tokens</h2><div class="cap-note">${left} of ${cfg.flexTokens} flexible token${cfg.flexTokens===1?'':'s'} remaining. Maximum 2 tokens in any Skill at creation.</div><div class="info-box"><b>${c.calling} has ${cfg.flexTokens} flexible tokens.</b> You may spend them on Horsemanship, your 0-token weapon Skill, or new Skills. Each new Skill costs at least 1 token, so you can add at most ${cfg.flexTokens} new Skill${cfg.flexTokens===1?'':'s'} if you spend one token in each.</div>${flexRows}${allocRows}</div>
   ${specialtyUI}<div class="nav-row"><button class="btn secondary" onclick="goStep(2)">← Back</button><button class="btn" onclick="goStep(4)" ${ready?'':'disabled'}>Next: Talents →</button></div>`;
 }
@@ -1072,12 +1179,14 @@ function gearTotalSpent(c){
 }
 function renderStep5(body){
   const c = state.character;
+  c.attrFinal = computeFinalAttrs(c); // ensure fresh — Discipline bonus depends on it
+  const disciplineBonus = c.attrFinal.Discipline ? maxPoolFace(c.attrFinal.Discipline) : 0;
+  const budget = startingBudget(c);
+  const budgetCp = Math.round(budget * 10);
   const spentCp = gearTotalSpentCp(c);
   const spent = spentCp / 10;
-  const remaining = (300 - spentCp) / 10;
-  const minOk = spentCp >= 250;  // >= 25 sp, compared in exact integer cp
-  const maxOk = (300 - spentCp) <= 50; // <= 5 sp remaining, compared in exact integer cp
-  const validBudget = minOk && maxOk;
+  const remaining = (budgetCp - spentCp) / 10;
+  const validBudget = spentCp <= budgetCp; // no minimum spend required — only an overspend cap
 
   let catHTML = '';
   Object.entries(EQUIPMENT_CATALOG).forEach(([cat, items]) => {
@@ -1105,9 +1214,9 @@ function renderStep5(body){
   body.innerHTML = `
     <div class="card">
       <h2>Budget</h2>
-      <div class="sheet-p" style="font-size:15px;"><b>Starting Budget:</b> 30 sp. Must spend at least 25 sp; may keep at most 5 sp unspent.</div>
+      <div class="sheet-p" style="font-size:15px;"><b>Starting Budget:</b> 30 sp + Discipline's highest current die (${DIE_LABEL[Math.max(...(c.attrFinal.Discipline||[1,1,1]))]} = +${disciplineBonus} sp) = <b>${budget.toFixed(1)} sp</b>. No minimum spend required — unspent sp may be saved.</div>
       <div class="sheet-p" style="font-size:16px;"><b>Spent:</b> ${spent.toFixed(1)} sp &nbsp; <b>Remaining:</b> ${remaining.toFixed(1)} sp</div>
-      ${!validBudget ? `<div class="info-box" style="border-color:var(--accent);">${!minOk ? 'Spend at least 25 sp total.' : 'You can keep at most 5 sp unspent — spend a bit more.'}</div>` : `<div class="info-box">Budget valid.</div>`}
+      ${!validBudget ? `<div class="info-box" style="border-color:var(--accent);">Over budget \u2014 remove some gear.</div>` : `<div class="info-box">Budget valid.</div>`}
     </div>
     <div class="card">
       <h2>General Gear &amp; Trade Goods (manual entry)</h2>
@@ -1149,14 +1258,19 @@ function removeOtherGear(i){
 
 
 function attrPoolText(c, attr){
-  const d = DIE_LABEL[c.attrFinal[attr]];
-  return `3${d}`;
+  return formatPool(c.attrFinal[attr]);
 }
+// Export die = smallest die currently in the pool (Attributes Core Master).
 function attrExportText(c, attr){
-  return DIE_LABEL[c.attrFinal[attr]];
+  return DIE_LABEL[minPoolIdx(c.attrFinal[attr])];
+}
+// Point-value = face of the pool's smallest die — an Attribute doesn't step
+// up in value until it fully advances (Character Creation Master, Step 6).
+function attrPointValue(c, attr){
+  return DIE_FACE[minPoolIdx(c.attrFinal[attr])];
 }
 function speedMoveValues(c){
-  const face = DIE_FACE[c.attrFinal.Speed];
+  const face = attrPointValue(c, 'Speed');
   const move = ({4:1,6:2,8:3,10:4,12:5})[face] || 1;
   return {move, sprint:move*2};
 }
@@ -1168,7 +1282,7 @@ function skillRollTextForAction(c, skill, attr){
     const d = tokensToDice(map[skill]);
     return `${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]} + ${exportDie}`;
   }
-  return `d4 + ${exportDie} (untrained)`;
+  return `d4 + d4 + ${exportDie} (unskilled)`;
 }
 function meleeDamageText(c, weaponDamage){
   return `${weaponDamage} + ${attrExportText(c,'Strength')}`;
@@ -1204,10 +1318,10 @@ function buildActionRows(c){
 function renderStep6(body){
   const c = state.character;
   c.attrFinal = computeFinalAttrs(c); // always fresh, never trust a stale snapshot
-  const health = DIE_FACE[c.attrFinal.Strength] + DIE_FACE[c.attrFinal.Fortitude] + DIE_FACE[c.attrFinal.Discipline];
-  const aura = DIE_FACE[c.attrFinal.Brains] + DIE_FACE[c.attrFinal.Presence] + DIE_FACE[c.attrFinal.Discipline];
+  const health = attrPointValue(c,'Strength') + attrPointValue(c,'Fortitude') + attrPointValue(c,'Discipline');
+  const aura = attrPointValue(c,'Brains') + attrPointValue(c,'Presence') + attrPointValue(c,'Discipline');
 
-  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${DIE_LABEL[c.attrFinal[a]]} ×3</td></tr>`).join('');
+  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${formatPool(c.attrFinal[a])}</td><td>${attrExportText(c,a)}</td></tr>`).join('');
   const granted = grantedSkills(c);
   const skillRows = granted.map(g => { const d=tokensToDice(g.tokens); return `<tr><td>${g.name}</td><td>${skillAttr(g.name)}</td><td>${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]}</td><td>${g.tokens}</td></tr>`; }).join('');
   const talentList = c.talents.length ? c.talents.join(', ') : '—';
@@ -1233,10 +1347,10 @@ function renderStep6(body){
     <div class="card">
       <h2>${c.name || '(unnamed)'} — ${c.origin} ${c.calling}</h2>
       <div class="sheet-p"><b>Health:</b> ${health}   <b>Aura:</b> ${aura}</div>
-      <table class="sheet-table"><tr><th>Attribute</th><th>Value</th></tr>${attrRows}</table>
+      <table class="sheet-table"><tr><th>Attribute</th><th>Pool</th><th>Export</th></tr>${attrRows}</table>
       <table class="sheet-table"><tr><th>Skill</th><th>Attr</th><th>Dice</th><th>Tokens</th></tr>${skillRows}</table>
       <div class="sheet-p"><b>Talents:</b> ${talentList}</div>${craftLine}${smithLine}
-      <div class="sheet-p"><b>Gear (${gearSpent.toFixed(1)} sp spent, ${(30-gearSpent).toFixed(1)} sp left):</b> ${gearList}</div>
+      <div class="sheet-p"><b>Gear (${gearSpent.toFixed(1)} sp spent, ${(startingBudget(c)-gearSpent).toFixed(1)} sp left of ${startingBudget(c).toFixed(1)}):</b> ${gearList}</div>
     </div>
     <div class="card">
       <h2>Export Preview</h2>
@@ -1260,7 +1374,7 @@ function renderStep6(body){
 
 function buildPrintSheet(c, health, aura, granted, originExtraHTML, gearList, gearSpent){
   const sheet = document.getElementById('sheet');
-  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${DIE_LABEL[c.attrFinal[a]]} ×3</td><td>${DIE_LABEL[c.attrFinal[a]]}</td></tr>`).join('');
+  const attrRows = ATTRS.map(a => `<tr><td>${a}</td><td>${formatPool(c.attrFinal[a])}</td><td>${attrExportText(c,a)}</td></tr>`).join('');
   const skillRows = granted.map(g => {
     const d=tokensToDice(g.tokens);
     return `<tr><td>${g.name}</td><td>${skillAttr(g.name)}</td><td>${DIE_LABEL[d[0]]} + ${DIE_LABEL[d[1]]}</td><td>${g.tokens}</td></tr>`;
@@ -1286,10 +1400,25 @@ function buildPrintSheet(c, health, aura, granted, originExtraHTML, gearList, ge
     : '';
   const actionRows = buildActionRows(c);
 
+  // Fatigue/Reagents are open-ended token pools tracked by hand on the printed
+  // sheet — a generous fixed box count, not a hard cap (Attributes Core /
+  // Economy & Equipment Masters).
+  const fatigueBoxes = '&#9744; '.repeat(6).trim();
+  const reagentBoxes = '&#9744; '.repeat(5).trim();
+
+  // Shade Debt track — Capacity starts at 2 (Level 1), +1 at Levels 4/7/10 (cap 5).
+  const debtSection = c.origin === 'Shade'
+    ? `<div class="sheet-statbox"><div>Debt (Capacity 2 at Lvl 1)</div><div class="sheet-p sheet-checks">${'&#9744; '.repeat(2).trim()}</div><div class="sheet-effect">+1 Capacity at Lvl 4, 7, 10 (cap 5). At Capacity: no Gifts, no Health/Aura/Fatigue recovery until Debt drops.</div></div>`
+    : '';
+  // Automaton Wear track — Cap 4, thresholds per Origins Master.
+  const wearSection = c.origin === 'Automaton'
+    ? `<div class="sheet-statbox"><div>Wear (Cap 4)</div><div class="sheet-p sheet-checks">${'&#9744; '.repeat(4).trim()}</div><div class="sheet-effect">Wear 2: \u22121 step all Attributes. Wear 3: \u22122 steps + 10% malfunction. Wear 4: roll Malfunction Table.</div></div>`
+    : '';
+
   sheet.innerHTML = `
     <div class="sheet-page">
       <div class="sheet-title"><div class="se">DELVER'S CUT</div><h2>CHARACTER SHEET</h2></div>
-      <div class="sheet-p"><b>Name:</b> ${c.name||'—'} &nbsp;&nbsp; <b>Origin:</b> ${c.origin} &nbsp;&nbsp; <b>Calling:</b> ${c.calling}</div>
+      <div class="sheet-p"><b>Name:</b> ${c.name||'—'} &nbsp;&nbsp; <b>Origin:</b> ${c.origin} &nbsp;&nbsp; <b>Calling:</b> ${c.calling} &nbsp;&nbsp; <b>Level:</b> 1 &nbsp;&nbsp; <b>Renown:</b> _______ / 100 to Level 2</div>
 
       <div class="sheet-core-grid">
         <div>
@@ -1298,12 +1427,20 @@ function buildPrintSheet(c, health, aura, granted, originExtraHTML, gearList, ge
         </div>
         <div>
           <div class="sheet-sec">Core Combat</div>
-          <div class="sheet-statbox"><div>Health</div><div class="big">${health}</div></div>
-          <div class="sheet-statbox"><div>Aura</div><div class="big">${aura}</div></div>
+          <div class="sheet-statbox"><div>Health</div><div class="big">_____ / ${health}</div></div>
+          <div class="sheet-statbox"><div>Aura</div><div class="big">_____ / ${aura}</div></div>
           <div class="sheet-statbox"><div>Initiative</div><div class="big">${initiativeBase}</div><div class="sheet-effect">${initiativeNote}</div></div>
           <div class="sheet-statbox"><div>Combat Move / Sprint</div><div class="big">${mv.move} / ${mv.sprint} hexes</div></div>
         </div>
       </div>
+
+      <div class="sheet-sec">Vitals &amp; Resources</div>
+      <div class="sheet-core-grid">
+        <div class="sheet-statbox"><div>Fatigue (\u22121 physical rolls per token; clear 1/Rest)</div><div class="sheet-p sheet-checks">${fatigueBoxes}</div></div>
+        <div class="sheet-statbox"><div>Reagents (Cap 5; 1 sp each; refill at Layover; Herbalism can forage DN 10)</div><div class="sheet-p sheet-checks">${reagentBoxes}</div></div>
+        ${debtSection}${wearSection}
+      </div>
+      <div class="sheet-p" style="margin-top:4px;"><b>Personal Load:</b> 7 (+3 with Backpack; mounts add +5 with Saddlebags)</div>
 
       <div class="sheet-sec">Actions</div>
       <table class="sheet-table sheet-action-table">
@@ -1327,14 +1464,30 @@ function buildPrintSheet(c, health, aura, granted, originExtraHTML, gearList, ge
       ${inventionRows}
       ${originExtraHTML && c.calling!=='Engineer' ? `<div class="sheet-sec">Extras</div>${originExtraHTML}` : ''}
 
-      <div class="sheet-sec">Gear (${gearSpent.toFixed(1)} sp spent, ${(30-gearSpent).toFixed(1)} sp left of 30)</div>
+      <div class="sheet-sec">Gear (${gearSpent.toFixed(1)} sp spent, ${(startingBudget(c)-gearSpent).toFixed(1)} sp left of ${startingBudget(c).toFixed(1)})</div>
       <div class="sheet-p">${gearList}</div>
 
       <div class="sheet-sec">Conditions</div>
       <div class="sheet-p sheet-checks">
         <span>&#9744; Bleeding</span><span>&#9744; Poisoned</span><span>&#9744; Concussed</span>
-        <span>&#9744; Unconscious</span><span>&#9744; Hallucinating</span><span>&#9744; Fatigued</span><span>&#9744; Dying</span>
+        <span>&#9744; Unconscious</span><span>&#9744; Hallucinating</span><span>&#9744; Dying</span>
       </div>
+
+      <div class="sheet-sec">Quick Reference</div>
+      <div class="sheet-core-grid">
+        <table class="sheet-table"><tr><th>Difficulty</th><th>DN</th></tr>
+          <tr><td>Easy</td><td>7</td></tr><tr><td>Moderate</td><td>10</td></tr><tr><td>Hard</td><td>13</td></tr>
+          <tr><td>Very Hard</td><td>17</td></tr><tr><td>Impossible</td><td>21</td></tr><tr><td>Beyond Reckoning</td><td>25</td></tr>
+        </table>
+        <table class="sheet-table"><tr><th>Margin</th><th>Result</th></tr>
+          <tr><td>1\u20132</td><td>Marginal success</td></tr>
+          <tr><td>3\u20135</td><td>Clear success</td></tr>
+          <tr><td>6+</td><td>Exceptional success</td></tr>
+        </table>
+      </div>
+
+      <div class="sheet-sec">Notes / Backstory</div>
+      <div class="sheet-notes-lines"></div>
     </div>
   `;
 }
@@ -1342,8 +1495,8 @@ function viewExportSheet(){
   const c = state.character;
   // Rebuild immediately so what is shown is always the current saved character.
   c.attrFinal = computeFinalAttrs(c);
-  const health = DIE_FACE[c.attrFinal.Strength] + DIE_FACE[c.attrFinal.Fortitude] + DIE_FACE[c.attrFinal.Discipline];
-  const aura = DIE_FACE[c.attrFinal.Brains] + DIE_FACE[c.attrFinal.Presence] + DIE_FACE[c.attrFinal.Discipline];
+  const health = attrPointValue(c,'Strength') + attrPointValue(c,'Fortitude') + attrPointValue(c,'Discipline');
+  const aura = attrPointValue(c,'Brains') + attrPointValue(c,'Presence') + attrPointValue(c,'Discipline');
   const granted = grantedSkills(c);
 
   let originExtra = '';
